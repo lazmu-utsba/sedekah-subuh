@@ -110,7 +110,7 @@
           
           <!-- Teks Informasi Scan / Upload -->
           <div class="w-52 mt-2 text-teal-700 text-[11px] font-bold py-1.5 text-center">
-            Scan langsung atau Unduh QRIS untuk upload ke E-Wallet
+            5. Scan langsung atau Unduh QRIS untuk upload ke E-Wallet
           </div>
         </div>
       </div>
@@ -340,6 +340,10 @@
     }
 
     function tampilkanQrisDanStruk(data) {
+      // Reset URL state sebelumnya setiap kali transaksi baru dibuka
+      generatedQrisDataUrl = "";
+      precomputedStrukDataUrl = "";
+
       document.getElementById("stepForm").classList.add("hidden");
       document.getElementById("stepQris").classList.remove("hidden");
 
@@ -377,25 +381,29 @@
 
         container.innerHTML = `<img src="${generatedQrisDataUrl}" alt="QRIS ${namaLabel}" class="w-44 h-auto object-contain">`;
 
-        // POTRET STRUK SECARA OTOMATIS SAAT POSISI TAMPIL DI LAYAR
+        // Potret struk secara otomatis begitu tampil di layar step 2
         setTimeout(() => {
           html2canvas(document.getElementById("kartuStruk"), { scale: 2, useCORS: true }).then(canvasTarget => {
             precomputedStrukDataUrl = canvasTarget.toDataURL("image/png");
           }).catch(e => console.error("Gagal render otomatis:", e));
-        }, 600);
+        }, 500);
       };
       img.src = qrisApiUrl;
     }
 
     function unduhQrisSaja() {
-      if (!generatedQrisDataUrl) return;
+      if (!generatedQrisDataUrl) {
+        tampilkanAlert("Gambar QRIS sedang dimuat, silakan coba sebentar lagi.");
+        return;
+      }
       const link = document.createElement("a");
       link.download = `QRIS_${currentTransaction.tujuan.replace(/\s+/g, '_')}_${currentTransaction.idTransaksi}.png`;
       link.href = generatedQrisDataUrl;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     }
 
-    // LANGSUNG DOWNLOAD OTOMATIS DENGAN NAMA FILE YANG DISESUAIKAN
     function unduhStrukPng() {
       if (!precomputedStrukDataUrl) {
         tampilkanAlert("Struk sedang disiapkan, silakan klik tombol unduh sekali lagi.");
@@ -424,7 +432,8 @@
       clearQuickSelection();
       pilihTujuan('dkm'); 
       currentTransaction = null;
-      precomputedStrukDataUrl = "";
+      generatedQrisDataUrl = "";    // <-- DIPERBAIKI: Dibersihkan agar transaksi baru tidak nyangkut
+      precomputedStrukDataUrl = ""; // <-- DIPERBAIKI: Dibersihkan agar transaksi baru tidak nyangkut
     }
 
     function selesaiTransaksi() {
