@@ -164,7 +164,7 @@
         const data = await res.json();
         if (data.status === "success") {
           appConfig = data.config;
-          renderAppUI(); // Re-render jika ada settingan custom
+          renderAppUI(); // Re-render setelah dapet config dari sheet
         }
       } catch (err) {
         console.error("Gagal load config, menggunakan fallback.", err);
@@ -179,7 +179,7 @@
       if(appConfig.LABEL_LAZMU) document.getElementById("labelLazmu").innerText = appConfig.LABEL_LAZMU;
       if(appConfig.SUB_LAZMU) document.getElementById("subLazmu").innerText = appConfig.SUB_LAZMU;
 
-      // PARSER NOMINAL DENGAN PENGAMAN OTOMATIS
+      // PARSER NOMINAL PENGAMAN
       let rawNom = String(appConfig.PILIHAN_NOMINAL || "").trim();
       let nominals = [];
 
@@ -188,7 +188,6 @@
       } else if (rawNom.includes(",")) {
         nominals = rawNom.split(",");
       } else {
-        // Fallback otomatis jika format di Google Sheets tergabung/rusak
         nominals = [10000, 20000, 50000, 100000];
       }
 
@@ -201,8 +200,7 @@
         if (isNaN(val) || val <= 0) return;
 
         validFound = true;
-        const isSelected = (idx === 0 && !selectedNominal) || val === selectedNominal;
-        if (idx === 0 && !selectedNominal) selectedNominal = val;
+        const isSelected = val === selectedNominal;
 
         const btn = document.createElement("button");
         btn.type = "button";
@@ -212,9 +210,9 @@
         container.appendChild(btn);
       });
 
-      // Jika tidak ada nominal valid yang bisa diparse, render 4 tombol default
+      // Fallback jika parser kosong
       if (!validFound) {
-        [10000, 20000, 50000, 100000].forEach((val, idx) => {
+        [10000, 20000, 50000, 100000].forEach((val) => {
           const isSelected = val === selectedNominal;
           const btn = document.createElement("button");
           btn.type = "button";
@@ -273,8 +271,12 @@
           doa: doaText
         };
 
+        // KUNCI HEADER TEXT/PLAIN DENGAN CHARSETS AGAR TIDAK DIBLOKIR BROWSER
         const res = await fetch(API_URL, {
           method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
           body: JSON.stringify(payload)
         });
 
@@ -337,7 +339,7 @@
     // 6. Eksekusi Selesai / WA Redirect
     function eksekusiSelesai(isWa) {
       if (isWa && currentTransaction) {
-        const noWa = currentTransaction.noWaAdmin || "6281234567890";
+        const noWa = currentTransaction.noWaAdmin || "628131626940";
         const pesan = `Assalamu'alaikum Admin, mohon konfirmasi Sedekah Subuh:\n\n` +
           `• *ID Transaksi:* ${currentTransaction.idTransaksi}\n` +
           `• *Tujuan:* ${currentTransaction.tujuan}\n` +
