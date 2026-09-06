@@ -85,14 +85,20 @@
           </div>
         </div>
 
-        <!-- Container QR Code Gambar (Menggunakan QRServer API Murni) -->
+        <!-- Container QR Code Canvas/Gambar dengan Teks Lembaga di Atasnya -->
         <div class="flex flex-col items-center justify-center mt-4 pt-3 border-t border-slate-200">
-          <div class="p-2 bg-white rounded-lg border border-slate-200">
-            <img id="imgQris" src="" alt="QRIS Code" class="w-48 h-48 object-contain">
+          <div id="qrisImageContainer" class="p-2 bg-white rounded-lg border border-slate-200 flex flex-col items-center">
+            <!-- Render QRIS via Canvas dinamis -->
           </div>
-          <p class="text-[10px] text-gray-400 mt-2">Scan menggunakan Mobile Banking / E-Wallet</p>
+          <p class="text-[10px] text-gray-400 mt-2">Scan langsung atau Unduh QRIS untuk upload ke E-Wallet</p>
         </div>
       </div>
+
+      <!-- Tombol Unduh Khusus Gambar QRIS -->
+      <button type="button" onclick="unduhQrisSaja()" 
+        class="w-full bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold py-2.5 rounded-xl mb-2 flex items-center justify-center gap-1 shadow-sm">
+        📲 Unduh Gambar QRIS (Sesuai Contoh)
+      </button>
 
       <!-- Tombol Unduh Struk -->
       <button type="button" onclick="unduhStrukPng()" 
@@ -129,7 +135,7 @@
 
   <script>
     // =========================================================
-    // CONFIGURATION (LINK APPS SCRIPT LATEST VERSION)
+    // CONFIGURATION
     // =========================================================
     const API_URL = "https://script.google.com/macros/s/AKfycbxB9D0--32Szfg5Hhvao84QOqy2khzcgwO_dUyuCUYt1lLygHE0TqMI7sp_4sSkeUA/exec";
 
@@ -137,6 +143,7 @@
     let selectedNominal = 10000;
     let appConfig = {};
     let currentTransaction = null;
+    let generatedQrisDataUrl = ""; // Menyimpan gambar QRIS berteks untuk diunduh
 
     window.addEventListener("DOMContentLoaded", () => {
       renderAppUI(); 
@@ -155,7 +162,6 @@
       }
     });
 
-    // 1. Fetch Config dari Apps Script (doGet)
     async function loadAppConfig() {
       try {
         const res = await fetch(`${API_URL}?action=getConfig`);
@@ -177,7 +183,6 @@
       if(appConfig.LABEL_LAZMU) document.getElementById("labelLazmu").innerText = appConfig.LABEL_LAZMU;
       if(appConfig.SUB_LAZMU) document.getElementById("subLazmu").innerText = appConfig.SUB_LAZMU;
 
-      // PARSER NOMINAL PENGAMAN DUAL FORMAT (| / ,)
       let rawNom = String(appConfig.PILIHAN_NOMINAL || "").trim();
       let nominals = [];
 
@@ -193,7 +198,7 @@
       container.innerHTML = "";
       
       let validFound = false;
-      nominals.forEach((nom, idx) => {
+      nominals.forEach((nom) => {
         const val = parseInt(String(nom).trim());
         if (isNaN(val) || val <= 0) return;
 
@@ -221,7 +226,6 @@
       }
     }
 
-    // 2. Tampilan UI Logic
     function pilihTujuan(tujuan) {
       selectedTujuan = tujuan;
       const btnDkm = document.getElementById("btnDkm");
@@ -250,7 +254,6 @@
       area.value = area.value ? area.value + " " + teks : teks;
     }
 
-    // 3. Proses Transaksi & Request Backend (doPost)
     async function prosesLanjutQris() {
       const manual = parseInt(document.getElementById("inputNominalManual").value);
       const nominalFinal = (manual && manual > 0) ? manual : selectedNominal;
@@ -299,7 +302,7 @@
       }
     }
 
-    // 4. Render QR Code Via API Gambar QRServer
+    // Render QR Code dengan Teks Nama Lembaga di Atasnya (Persis Contoh Anda)
     function tampilkanQrisDanStruk(data) {
       document.getElementById("stepForm").classList.add("hidden");
       document.getElementById("stepQris").classList.remove("hidden");
@@ -311,9 +314,43 @@
       document.getElementById("strukNominal").innerText = `Rp ${data.nominal.toLocaleString('id-ID')}`;
       document.getElementById("strukDoa").innerText = data.doa || "-";
 
-      // Render Gambar QRIS via QRServer API
-      const qrisUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.qrisString)}`;
-      document.getElementById("imgQris").src = qrisUrl;
+      // Ambil label dinamis sesuai tujuan (LABEL_DKM atau LABEL_LAZMU)
+      const namaLabel = data.tujuanCode === 'dkm' ? (appConfig.LABEL_DKM || "DKM Utsman") : (appConfig.LABEL_LAZMU || "LAZMU Utsman");
+
+      // Buat Canvas Gambar QRIS berteks otomatis
+      const container = document.getElementById("qrisImageContainer");
+      container.innerHTML = '<div class="text-xs text-gray-400 py-6">Membuat gambar QRIS...</div>';
+
+      const qrisApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.qrisString)}`;
+
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 300;
+        canvas.height = 340;
+        const ctx = canvas.getContext('2d');
+
+        // Background putih bersih
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Tulis teks nama lembaga di atas (Warna hijau teal, tebal, center)
+        ctx.fillStyle = "#038b86";
+        ctx.font = "bold 16px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(namaLabel, 150, 28);
+
+        // Gambar QR Code di bawah teks
+        ctx.drawImage(img, 0, 40, 300, 300);
+
+        // Simpan hasil ke variabel global untuk tombol download
+        generatedQrisDataUrl = canvas.toDataURL("image/png");
+
+        // Tampilkan ke layar
+        container.innerHTML = `<img src="${generatedQrisDataUrl}" alt="QRIS ${namaLabel}" class="w-48 h-auto object-contain">`;
+      };
+      img.src = qrisApiUrl;
 
       // Atur Tombol WA Admin (Hanya aktif jika tujuan LAZMU)
       const btnWa = document.getElementById("btnWaAdmin");
@@ -324,7 +361,19 @@
       }
     }
 
-    // 5. Unduh Struk Digital sebagai Gambar PNG (html2canvas)
+    // Fungsi Unduh Gambar QRIS Saja (Sesuai contoh permintaan Anda)
+    function unduhQrisSaja() {
+      if (!generatedQrisDataUrl) {
+        alert("Gambar QRIS sedang dimuat, mohon tunggu sebentar.");
+        return;
+      }
+      const link = document.createElement("a");
+      link.download = `QRIS_${currentTransaction.tujuan.replace(/\s+/g, '_')}_${currentTransaction.idTransaksi}.png`;
+      link.href = generatedQrisDataUrl;
+      link.click();
+    }
+
+    // Unduh Struk Digital sebagai Gambar PNG (html2canvas)
     function unduhStrukPng() {
       const element = document.getElementById("kartuStruk");
       html2canvas(element, { scale: 2, useCORS: true }).then(canvas => {
@@ -335,7 +384,7 @@
       });
     }
 
-    // 6. Eksekusi Selesai / WA Redirect
+    // Eksekusi Selesai / WA Redirect
     function eksekusiSelesai(isWa) {
       if (isWa && currentTransaction) {
         const noWa = currentTransaction.noWaAdmin || "628131626940";
@@ -354,7 +403,6 @@
       document.getElementById("stepThankYou").classList.remove("hidden");
     }
 
-    // 7. Dynamic Subuh Prayer Time (Aladhan API)
     async function fetchJadwalSubuh() {
       try {
         const res = await fetch("https://api.aladhan.com/v1/timingsByCity?city=Bandung&country=Indonesia&method=2");
