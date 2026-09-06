@@ -11,6 +11,54 @@
 </head>
 <body class="bg-slate-100 min-h-screen font-sans pb-10">
 
+  <!-- WELCOME MODAL INTERAKTIF (SLIDER GESER KE KANAN) -->
+  <div id="welcome-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center space-y-4 relative overflow-hidden border border-slate-100 transform transition-all">
+      
+      <!-- Logo Circle -->
+      <div class="flex justify-center">
+        <div class="w-20 h-20 rounded-full border-2 border-teal-100 bg-teal-50/50 flex items-center justify-center p-1 shadow-inner">
+          <img src="https://lh3.googleusercontent.com/d/1CnBKrSHF_nKrMw1IeM6awuhtOn6TuOAJ" alt="Logo LAZMU" class="w-16 h-16 object-contain rounded-full">
+        </div>
+      </div>
+
+      <!-- Title & Slogan -->
+      <div>
+        <h2 id="modal-title" class="text-base font-bold text-teal-800 tracking-wide">Sedekah Subuh LAZMU</h2>
+        <p id="modal-slogan" class="text-xs text-slate-500 font-medium mt-0.5">Masjid Utsman Bin Affan</p>
+      </div>
+
+      <!-- Welcome Text -->
+      <p class="text-xs text-slate-600 leading-relaxed px-2">
+        Ahlan wa Sahlan! Selamat datang di layanan Sedekah Subuh digital. Mari jadikan pagi penuh berkah dengan berbagi kebaikan.
+      </p>
+
+      <!-- Quote -->
+      <p id="modal-quote" class="text-xs italic font-semibold text-teal-700 bg-teal-50/60 py-2.5 px-3 rounded-xl border border-teal-100">
+        "Awali hari dengan berbagi, raih keberkahan abadi"
+      </p>
+
+      <!-- Slider Section (Anti-Bot & Human Verification) -->
+      <div class="pt-2">
+        <p class="text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider">👉 Geser ke kanan untuk mulai sedekah</p>
+        
+        <!-- Slider Track -->
+        <div id="slider-track" class="relative w-full h-12 bg-slate-100 rounded-full p-1 flex items-center select-none border border-slate-200 overflow-hidden shadow-inner">
+          <span id="slider-text" class="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-slate-400 tracking-widest pl-6 pointer-events-none transition-opacity">GESER UNTUK MULAI &rarr;</span>
+          
+          <!-- Slider Knob (Tombol Geser) -->
+          <div id="slider-knob" class="absolute left-1 w-10 h-10 bg-teal-700 hover:bg-teal-800 text-white rounded-full flex items-center justify-center shadow-md cursor-pointer transition-colors z-10 active:scale-95">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+          </div>
+          
+          <!-- Fill Bar Background -->
+          <div id="slider-fill" class="absolute left-0 top-0 bottom-0 bg-teal-100/60 rounded-l-full pointer-events-none transition-all duration-75" style="width: 40px;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <div class="max-w-md mx-auto mt-4 p-4">
     
     <!-- HEADER INSTITUSI (LATAR BELAKANG PUTIH BERSIH) -->
@@ -187,7 +235,102 @@
       renderAppUI(); 
       loadAppConfig();
       pilihTujuan('lazmu'); 
+      initSlider(); // Inisialisasi Slider Geser Human Verification
     });
+
+    // ---------------------------------------------------------
+    // SLIDER GESER UNTUK MULAI (HUMAN VERIFICATION & ANIMASI MODAL)
+    // ---------------------------------------------------------
+    function initSlider() {
+      const track = document.getElementById('slider-track');
+      const knob = document.getElementById('slider-knob');
+      const fill = document.getElementById('slider-fill');
+      const sliderText = document.getElementById('slider-text');
+      
+      if (!track || !knob) return;
+
+      let isDragging = false;
+      let startX = 0;
+      let maxTranslate = 0;
+
+      const updateMetrics = () => {
+        maxTranslate = track.clientWidth - knob.clientWidth - 8; // padding 8px
+      };
+      updateMetrics();
+      window.addEventListener('resize', updateMetrics);
+
+      const dragStart = (e) => {
+        isDragging = true;
+        startX = e.clientX || e.touches[0].clientX;
+        sliderText.style.opacity = '0.3';
+      };
+
+      const dragMove = (e) => {
+        if (!isDragging) return;
+        const currentX = e.clientX || e.touches[0].clientX;
+        let diff = currentX - startX;
+        if (diff < 0) diff = 0;
+        if (diff > maxTranslate) diff = maxTranslate;
+        
+        knob.style.transform = `translateX(${diff}px)`;
+        fill.style.width = `${diff + 40}px`;
+
+        if (diff >= maxTranslate - 10) {
+          isDragging = false;
+          successSlider();
+        }
+      };
+
+      const dragEnd = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        // Kembali ke posisi awal jika belum sampai ujung
+        knob.style.transition = 'transform 0.3s ease';
+        fill.style.transition = 'width 0.3s ease';
+        knob.style.transform = 'translateX(0px)';
+        fill.style.width = '40px';
+        sliderText.style.opacity = '1';
+        setTimeout(() => {
+          knob.style.transition = '';
+          fill.style.transition = '';
+        }, 300);
+      };
+
+      knob.addEventListener('mousedown', dragStart);
+      window.addEventListener('mousemove', dragMove);
+      window.addEventListener('mouseup', dragEnd);
+
+      knob.addEventListener('touchstart', dragStart);
+      window.addEventListener('touchmove', dragMove);
+      window.addEventListener('touchend', dragEnd);
+    }
+
+    function successSlider() {
+      const track = document.getElementById('slider-track');
+      const knob = document.getElementById('slider-knob');
+      const fill = document.getElementById('slider-fill');
+      const sliderText = document.getElementById('slider-text');
+      const maxTranslate = track.clientWidth - knob.clientWidth - 8;
+
+      knob.style.transition = 'transform 0.2s ease';
+      fill.style.transition = 'width 0.2s ease';
+      knob.style.transform = `translateX(${maxTranslate}px)`;
+      fill.style.width = `${track.clientWidth}px`;
+      
+      sliderText.innerText = "BERHASIL ✨";
+      sliderText.style.opacity = '1';
+      sliderText.style.color = '#038b86';
+      
+      setTimeout(() => {
+        const modal = document.getElementById('welcome-modal');
+        modal.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        modal.style.opacity = '0';
+        modal.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+          modal.classList.add('hidden');
+        }, 400);
+      }, 300);
+    }
 
     function tampilkanAlert(pesan) {
       document.getElementById('customAlertPesan').innerText = pesan;
@@ -205,6 +348,14 @@
         if (data.status === "success") {
           appConfig = data.config;
           renderAppUI();
+
+          // Sesuaikan teks Modal Selamat Datang berdasarkan konfigurasi Sheet
+          if (appConfig.NAMA_LEMBAGA) {
+            document.getElementById("modal-title").innerText = appConfig.NAMA_LEMBAGA;
+          }
+          if (appConfig.SLOGAN) {
+            document.getElementById("modal-slogan").innerText = appConfig.SLOGAN;
+          }
         }
       } catch (err) {
         console.error("Gagal load config", err);
@@ -423,10 +574,9 @@
       document.getElementById('stepQris').classList.add('hidden');
       document.getElementById('stepForm').classList.remove('hidden');
       
-      // PERBAIKAN: Mengunci default pilihan kembali ke 5000 saat tombol 'Sedekah Lagi' ditekan
       selectedNominal = 5000;
       pilihTujuan('lazmu'); 
-      renderAppUI(); // Merender ulang agar tombol 5000 otomatis terpilih dan ter-highlight hijau
+      renderAppUI(); 
       
       currentTransaction = null;
       generatedQrisDataUrl = "";
@@ -434,7 +584,6 @@
     }
 
     async function selesaiTransaksi() {
-      // 1. Pastikan html2canvas merender kartu struk dengan sempurna SEBELUM stepQris disembunyikan
       try {
         const canvasTarget = await html2canvas(document.getElementById("kartuStruk"), { scale: 2, useCORS: true });
         precomputedStrukDataUrl = canvasTarget.toDataURL("image/png");
@@ -442,7 +591,6 @@
         console.error("Gagal render struk:", err);
       }
 
-      // 2. Kirim data ke backend resmi saat tombol konfirmasi ditekan
       try {
         const payload = {
           action: "simpanTransaksi",
@@ -461,7 +609,6 @@
         console.error("Gagal mencatat transaksi final:", err);
       }
 
-      // 3. Pindah ke halaman Terima Kasih
       document.getElementById("stepQris").classList.add("hidden");
       document.getElementById("stepThankYou").classList.remove("hidden");
 
@@ -504,12 +651,10 @@
             <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12C2 13.73 2.44 15.35 3.19 16.76L2 22L7.4 20.87C8.82 21.6 10.37 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM17.15 16.3C16.92 16.9 16.03 17.41 15.42 17.53C14.93 17.62 14.23 17.71 11.53 16.6C8.1 15.2 5.89 11.69 5.73 11.47C5.57 11.26 4.43 9.74 4.43 8.16C4.43 6.58 5.23 5.81 5.54 5.5C5.8 5.23 6.22 5.12 6.6 5.12C6.73 5.12 6.84 5.13 6.94 5.13C7.26 5.18 7.42 5.2 7.63 5.7C7.89 6.33 8.52 7.87 8.6 8.03C8.68 8.19 8.76 8.4 8.65 8.6C8.55 8.8 8.47 8.92 8.31 9.1C8.15 9.28 8.01 9.47 7.85 9.61C7.68 9.77 7.5 9.94 7.69 10.27C7.88 10.6 8.52 11.64 9.45 12.47C10.65 13.54 11.63 13.88 11.97 14.03C12.31 14.18 12.51 14.16 12.7 13.95C12.89 13.74 13.43 13.11 13.63 12.82C13.84 12.53 14.05 12.56 14.36 12.67C14.67 12.78 16.33 13.6 16.64 13.76C16.95 13.92 17.16 14.01 17.24 14.14C17.31 14.27 17.31 14.91 17.15 16.3Z"/></svg>
             Konfirmasi Sedekah ke WA Admin
           </a>
-          <!-- PERBAIKAN: Tombol Selesai diganti Sedekah Lagi persis seperti DKM -->
           <button type="button" onclick="resetFormToHome()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3.5 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-1.5">
             <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
             Sedekah Lagi
           </button>
-          <!-- PERBAIKAN: Tombol Kunjungi Media LAZMU ditambahkan -->
           <a href="${ziswafUrl}" target="_blank" class="block w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-sm">
             <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
             Kunjungi Media LAZMU
