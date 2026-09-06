@@ -162,23 +162,15 @@
   <!-- POP-UP CUSTOM ALERT SUPER CANTIK EKSKLUSIF -->
   <!-- ========================================== -->
   <div id="customAlertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4">
-    <!-- Latar Belakang Gelap Blur -->
     <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="tutupAlert()"></div>
-    
-    <!-- Kotak Pesan -->
     <div class="bg-white rounded-2xl shadow-xl z-10 w-full max-w-xs p-6 text-center transform transition-all border border-slate-100">
-      
-      <!-- Ikon Peringatan (Warning) -->
       <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-amber-100 mb-4 shadow-sm border border-amber-200">
         <svg class="h-7 w-7 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
         </svg>
       </div>
-      
       <h3 class="text-lg font-bold text-slate-800 mb-2">Peringatan</h3>
       <p id="customAlertPesan" class="text-sm text-slate-600 mb-6 leading-relaxed">Pesan error di sini.</p>
-      
-      <!-- Tombol OK -->
       <button type="button" onclick="tutupAlert()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl text-sm transition-all shadow-md cursor-pointer tracking-wide">
         Mengerti
       </button>
@@ -203,7 +195,6 @@
       loadAppConfig();
     });
 
-    // FUNGSI ALERT CANTIK
     function tampilkanAlert(pesan) {
       document.getElementById('customAlertPesan').innerText = pesan;
       document.getElementById('customAlertModal').classList.remove('hidden');
@@ -318,7 +309,6 @@
       const nominalFinal = (manual && manual > 0) ? manual : selectedNominal;
       
       if (!nominalFinal || nominalFinal <= 0) {
-        // ALERT CANTIK DIPANGGIL DI SINI
         tampilkanAlert("Mohon pilih atau masukkan nominal sedekah terlebih dahulu.");
         return;
       }
@@ -350,11 +340,9 @@
           currentTransaction = data;
           tampilkanQrisDanStruk(data);
         } else {
-          // ALERT CANTIK KETIKA GAGAL SERVER
           tampilkanAlert("Gagal dari Server: " + data.message);
         }
       } catch (err) {
-        // ALERT CANTIK KETIKA ADA PESAN SISTEM
         tampilkanAlert("Pesan Sistem: " + err.message);
       } finally {
         btnSubmit.disabled = false;
@@ -411,13 +399,22 @@
       link.click();
     }
 
+    // PERBAIKAN UTAMA: Menggunakan Blob agar gambar struk bisa dibuka di semua HP/PC tanpa error format
     function unduhStrukPng() {
       const element = document.getElementById("kartuStruk");
       html2canvas(element, { scale: 2, useCORS: true }).then(canvas => {
-        const link = document.createElement("a");
-        link.download = `Struk_Sedekah_${currentTransaction.idTransaksi}.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
+        canvas.toBlob(function(blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.download = `Struk_Sedekah_${currentTransaction.idTransaksi}.png`;
+          link.href = url;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(url), 100);
+        }, 'image/png');
+      }).catch(err => {
+        tampilkanAlert("Gagal mengunduh struk: " + err.message);
       });
     }
 
