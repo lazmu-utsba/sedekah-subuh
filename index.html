@@ -108,7 +108,7 @@
             <!-- Render QRIS via Canvas dinamis -->
           </div>
           
-          <!-- Teks Informasi Scan / Upload (Revisi: Murni Teks Hijau, Tanpa Background) -->
+          <!-- Teks Informasi Scan / Upload -->
           <div class="w-52 mt-2 text-teal-700 text-[11px] font-bold py-1.5 text-center">
             5. Scan langsung atau Unduh QRIS untuk upload ke E-Wallet
           </div>
@@ -158,6 +158,34 @@
 
   </div>
 
+  <!-- ========================================== -->
+  <!-- POP-UP CUSTOM ALERT SUPER CANTIK EKSKLUSIF -->
+  <!-- ========================================== -->
+  <div id="customAlertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4">
+    <!-- Latar Belakang Gelap Blur -->
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="tutupAlert()"></div>
+    
+    <!-- Kotak Pesan -->
+    <div class="bg-white rounded-2xl shadow-xl z-10 w-full max-w-xs p-6 text-center transform transition-all border border-slate-100">
+      
+      <!-- Ikon Peringatan (Warning) -->
+      <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-amber-100 mb-4 shadow-sm border border-amber-200">
+        <svg class="h-7 w-7 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      
+      <h3 class="text-lg font-bold text-slate-800 mb-2">Peringatan</h3>
+      <p id="customAlertPesan" class="text-sm text-slate-600 mb-6 leading-relaxed">Pesan error di sini.</p>
+      
+      <!-- Tombol OK -->
+      <button type="button" onclick="tutupAlert()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl text-sm transition-all shadow-md cursor-pointer tracking-wide">
+        Mengerti
+      </button>
+    </div>
+  </div>
+  <!-- ========================================== -->
+
   <script>
     // =========================================================
     // CONFIGURATION
@@ -174,6 +202,16 @@
       renderAppUI(); 
       loadAppConfig();
     });
+
+    // FUNGSI ALERT CANTIK
+    function tampilkanAlert(pesan) {
+      document.getElementById('customAlertPesan').innerText = pesan;
+      document.getElementById('customAlertModal').classList.remove('hidden');
+    }
+    
+    function tutupAlert() {
+      document.getElementById('customAlertModal').classList.add('hidden');
+    }
 
     async function loadAppConfig() {
       try {
@@ -280,7 +318,8 @@
       const nominalFinal = (manual && manual > 0) ? manual : selectedNominal;
       
       if (!nominalFinal || nominalFinal <= 0) {
-        alert("Mohon pilih atau masukkan nominal sedekah terlebih dahulu.");
+        // ALERT CANTIK DIPANGGIL DI SINI
+        tampilkanAlert("Mohon pilih atau masukkan nominal sedekah terlebih dahulu.");
         return;
       }
 
@@ -311,10 +350,12 @@
           currentTransaction = data;
           tampilkanQrisDanStruk(data);
         } else {
-          alert("Gagal dari Server: " + data.message);
+          // ALERT CANTIK KETIKA GAGAL SERVER
+          tampilkanAlert("Gagal dari Server: " + data.message);
         }
       } catch (err) {
-        alert("Pesan Sistem: " + err.message);
+        // ALERT CANTIK KETIKA ADA PESAN SISTEM
+        tampilkanAlert("Pesan Sistem: " + err.message);
       } finally {
         btnSubmit.disabled = false;
         btnSubmit.innerText = "Lanjut ke QRIS";
@@ -380,13 +421,11 @@
       });
     }
 
-    // Fungsi tombol Kembali / Ubah Pilihan yang sebelumnya error
     function kembaliKeForm() {
       document.getElementById('stepQris').classList.add('hidden');
       document.getElementById('stepForm').classList.remove('hidden');
     }
 
-    // Fungsi Reset / Sedekah Lagi yang sebelumnya error
     function resetFormToHome() {
       document.getElementById('inputNominalManual').value = '';
       document.getElementById('inputDoa').value = '';
@@ -394,11 +433,10 @@
       document.getElementById('stepQris').classList.add('hidden');
       document.getElementById('stepForm').classList.remove('hidden');
       clearQuickSelection();
-      pilihTujuan('dkm'); // Kode asli Bosku manggil selectTujuan (error), ini yang benar
+      pilihTujuan('dkm'); 
       currentTransaction = null;
     }
 
-    // HALAMAN TERIMA KASIH DINAMIS 
     function selesaiTransaksi() {
       document.getElementById("stepQris").classList.add("hidden");
       document.getElementById("stepThankYou").classList.remove("hidden");
@@ -409,7 +447,6 @@
       const ziswafUrl = appConfig.ZISWAF_URL || "https://s.id/lazmu";
 
       if (currentTransaction.tujuanCode === 'dkm') {
-        // JIKA SEDEKAH KE DKM (Ganti Emoji dengan SVG)
         containerBtn.innerHTML = `
           <button type="button" onclick="unduhStrukPng()" class="w-full bg-white hover:bg-slate-50 text-teal-700 border border-teal-600 font-semibold py-3 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm">
             <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 16L7 11H10V4H14V11H17L12 16ZM4 18H20V20H4V18Z"/></svg>
@@ -425,7 +462,6 @@
           </a>
         `;
       } else {
-        // JIKA SEDEKAH KE LAZMU (Revisi: Tombol Selesai Hijau Solid)
         const noWa = currentTransaction.noWaAdmin || "628131626940";
         const pesanWa = `Assalamu'alaikum Admin, mohon konfirmasi Sedekah Subuh:\n\n` +
           `• *ID Transaksi:* ${currentTransaction.idTransaksi}\n` +
