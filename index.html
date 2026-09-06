@@ -110,7 +110,7 @@
           
           <!-- Teks Informasi Scan / Upload -->
           <div class="w-52 mt-2 text-teal-700 text-[11px] font-bold py-1.5 text-center">
-            Scan langsung atau Unduh QRIS untuk upload ke E-Wallet
+            5. Scan langsung atau Unduh QRIS untuk upload ke E-Wallet
           </div>
         </div>
       </div>
@@ -156,26 +156,6 @@
 
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL PREVIEW STRUK -->
-  <!-- ========================================== -->
-  <div id="modalStrukPreview" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/80 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl z-10 w-full max-w-sm p-5 text-center border border-slate-100 flex flex-col max-h-[90vh]">
-      <h3 class="text-base font-bold text-teal-800 mb-1">Struk Berhasil Dibuat!</h3>
-      <p class="text-[11px] text-gray-500 mb-3">Tekan dan tahan (long-press) gambar di bawah, lalu pilih <strong class="text-teal-700">"Simpan Gambar"</strong>.</p>
-      
-      <!-- Container Gambar Struk -->
-      <div id="containerGambarHasil" class="overflow-auto border border-slate-200 rounded-xl mb-4 bg-slate-50 p-2 flex justify-center">
-        <!-- Gambar hasil render canvas akan muncul disini -->
-      </div>
-      
-      <button type="button" onclick="tutupModalStruk()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-md cursor-pointer">
-        Tutup & Lanjutkan
-      </button>
-    </div>
-  </div>
-  <!-- ========================================== -->
-
   <!-- POP-UP CUSTOM ALERT -->
   <div id="customAlertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4">
     <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="tutupAlert()"></div>
@@ -201,7 +181,7 @@
     let appConfig = {};
     let currentTransaction = null;
     let generatedQrisDataUrl = "";
-    let precomputedStrukDataUrl = ""; // Variabel penyimpan hasil potret otomatis
+    let precomputedStrukDataUrl = "";
 
     window.addEventListener("DOMContentLoaded", () => {
       renderAppUI(); 
@@ -215,10 +195,6 @@
     
     function tutupAlert() {
       document.getElementById('customAlertModal').classList.add('hidden');
-    }
-
-    function tutupModalStruk() {
-      document.getElementById('modalStrukPreview').classList.add('hidden');
     }
 
     async function loadAppConfig() {
@@ -401,12 +377,12 @@
 
         container.innerHTML = `<img src="${generatedQrisDataUrl}" alt="QRIS ${namaLabel}" class="w-44 h-auto object-contain">`;
 
-        // OTOMATIS POTRET STRUK SAAT POSISI SEDANG TAMPIL (STEP 2)
+        // POTRET STRUK SECARA OTOMATIS SAAT POSISI TAMPIL DI LAYAR
         setTimeout(() => {
           html2canvas(document.getElementById("kartuStruk"), { scale: 2, useCORS: true }).then(canvasTarget => {
             precomputedStrukDataUrl = canvasTarget.toDataURL("image/png");
           }).catch(e => console.error("Gagal render otomatis:", e));
-        }, 500);
+        }, 600);
       };
       img.src = qrisApiUrl;
     }
@@ -419,16 +395,19 @@
       link.click();
     }
 
-    // MUNCULKAN GAMBAR DARI HASIL FOTO OTOMATIS SEBELUMNYA
+    // LANGSUNG DOWNLOAD OTOMATIS DENGAN NAMA FILE YANG DISESUAIKAN
     function unduhStrukPng() {
       if (!precomputedStrukDataUrl) {
-        tampilkanAlert("Struk sedang disiapkan, silakan klik sekali lagi.");
+        tampilkanAlert("Struk sedang disiapkan, silakan klik tombol unduh sekali lagi.");
         return;
       }
       
-      const containerGambar = document.getElementById("containerGambarHasil");
-      containerGambar.innerHTML = `<img src="${precomputedStrukDataUrl}" alt="Struk Sedekah" class="w-full h-auto rounded-lg shadow-sm">`;
-      document.getElementById('modalStrukPreview').classList.remove('hidden');
+      const link = document.createElement("a");
+      link.download = `Struk_Sedekah_${currentTransaction.idTransaksi}.png`;
+      link.href = precomputedStrukDataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     function kembaliKeForm() {
