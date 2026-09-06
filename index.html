@@ -11,16 +11,18 @@
 </head>
 <body class="bg-slate-100 min-h-screen font-sans pb-10">
 
-  <!-- BANNER WAKTU SUBUH DINAMIS -->
-  <div id="subuhBanner" class="bg-teal-800 text-white text-xs md:text-sm py-2 px-4 text-center font-medium shadow-md">
-    🕌 Loading jadwal Subuh...
-  </div>
-
   <div class="max-w-md mx-auto mt-4 p-4">
-    <!-- HEADER -->
-    <div class="text-center mb-6">
-      <h1 class="text-2xl font-bold text-teal-800" id="txtNamaLembaga">Sedekah Subuh</h1>
-      <p class="text-xs text-gray-600 mt-1" id="txtSlogan">Masjid Utsman Bin Affan</p>
+    
+    <!-- HEADER INSTITUSI (LATAR BELAKANG PUTIH BERSIH) -->
+    <div class="bg-white rounded-2xl shadow-sm p-5 border border-slate-200 text-center mb-4">
+      <div class="flex justify-center mb-3">
+        <img src="https://lh3.googleusercontent.com/d/1CnBKrSHF_nKrMw1IeM6awuhtOn6TuOAJ" alt="Logo LAZMU" class="w-16 h-16 object-contain rounded-full shadow-sm border border-slate-100 bg-white p-1">
+      </div>
+      <h1 class="text-base font-bold text-teal-800" id="txtNamaLembaga">Lembaga Amil Zakat Masjid Utsman bin Affan</h1>
+      <p class="text-[11px] text-gray-500 mt-0.5 font-medium">#Menyalurkan Amanah, Menghadirkan Manfaat</p>
+      <p class="text-[10px] text-gray-400 mt-2 px-2 leading-relaxed border-t border-slate-100 pt-2">
+        Masjid Utsman bin 'Affan, The Green City View Blok K-1, Kel. Jatihandap, Kec. Mandalajati, Kota Bandung, Jawa Barat
+      </p>
     </div>
 
     <!-- STEP 1: FORM INPUT TRANSAKSI -->
@@ -46,8 +48,14 @@
       <div class="grid grid-cols-2 gap-2 mb-3" id="containerNominal">
         <!-- Pilihan nominal dirender otomatis via JS -->
       </div>
-      <input type="number" id="inputNominalManual" placeholder="Nominal Lainnya (Rp)" 
-        class="w-full p-2.5 text-sm border border-gray-300 rounded-xl mb-4 focus:ring-2 focus:ring-teal-500 outline-none">
+
+      <!-- Input Nominal Lainnya dengan Masking Otomatis -->
+      <div class="relative mb-4">
+        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-gray-400">Rp</span>
+        <input type="text" id="inputNominalManual" placeholder="Atau ketik nominal lainnya..." 
+          oninput="formatRupiahMasking(this); clearQuickSelection();"
+          class="w-full pl-9 pr-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
 
       <!-- Chip Doa Cepat & Input Doa -->
       <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Doa / Hajat <span class="text-gray-400 font-normal">(Opsional)</span></label>
@@ -60,7 +68,7 @@
         class="w-full p-2.5 text-sm border border-gray-300 rounded-xl mb-5 focus:ring-2 focus:ring-teal-500 outline-none"></textarea>
 
       <button type="button" onclick="prosesLanjutQris()" id="btnSubmit"
-        class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl text-sm shadow-md transition-all">
+        class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl text-sm shadow-md transition-all cursor-pointer">
         Lanjut ke QRIS
       </button>
     </div>
@@ -85,50 +93,50 @@
           </div>
         </div>
 
-        <!-- Container QR Code Canvas/Gambar dengan Teks Lembaga di Atasnya -->
+        <!-- Container QR Code dengan Lebar Presisi -->
         <div class="flex flex-col items-center justify-center mt-4 pt-3 border-t border-slate-200">
-          <div id="qrisImageContainer" class="p-2 bg-white rounded-lg border border-slate-200 flex flex-col items-center">
+          <div id="qrisImageContainer" class="p-2 bg-white rounded-lg border border-slate-200 flex flex-col items-center w-52">
             <!-- Render QRIS via Canvas dinamis -->
           </div>
-          <p class="text-[10px] text-gray-400 mt-2">Scan langsung atau Unduh QRIS untuk upload ke E-Wallet</p>
+          
+          <!-- Teks Informasi Scan / Upload (Background Hijau Tombol) -->
+          <div class="w-52 mt-2 bg-teal-700 text-white text-[10px] font-semibold py-1.5 px-2 rounded-lg text-center shadow-sm">
+            Scan langsung atau Unduh QRIS untuk upload ke E-Wallet
+          </div>
         </div>
       </div>
 
-      <!-- Tombol Unduh Khusus Gambar QRIS -->
-      <button type="button" onclick="unduhQrisSaja()" 
-        class="w-full bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold py-2.5 rounded-xl mb-2 flex items-center justify-center gap-1 shadow-sm">
-        📲 Unduh Gambar QRIS (Sesuai Contoh)
-      </button>
-
-      <!-- Tombol Unduh Struk -->
-      <button type="button" onclick="unduhStrukPng()" 
-        class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2.5 rounded-xl mb-4 flex items-center justify-center gap-1">
-        📥 Simpan Struk ke Galeri (PNG)
-      </button>
-
-      <!-- Pilihan Aksi Selesai / WA -->
-      <div class="space-y-2 pt-2 border-t border-slate-100">
-        <button type="button" id="btnWaAdmin" onclick="eksekusiSelesai(true)" 
-          class="hidden w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow">
-          🟢 Konfirmasi ke WA Admin
-        </button>
-        <button type="button" onclick="eksekusiSelesai(false)" 
-          class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs">
-          🤫 Sedekah Rahasia (Tanpa WA)
+      <!-- Tombol Unduh Khusus Gambar QRIS (Lebar Sama, Warna Transparan / Sekunder) -->
+      <div class="flex justify-center mb-3">
+        <button type="button" onclick="unduhQrisSaja()" 
+          class="w-52 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-1 transition shadow-sm cursor-pointer">
+          📲 Unduh Gambar QRIS
         </button>
       </div>
+
+      <!-- Tombol Utama: Saya Sudah Transfer dan Lanjutkan Proses -->
+      <button type="button" onclick="selesaiTransaksi()" 
+        class="w-full bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold py-3 rounded-xl mb-3 shadow-md flex items-center justify-center gap-1.5 cursor-pointer">
+        ✅ Saya Sudah Transfer dan Lanjutkan Proses
+      </button>
+
+      <!-- Tombol Kembali -->
+      <button type="button" onclick="kembaliKeForm()" 
+        class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs transition cursor-pointer">
+        Kembali / Ubah Pilihan
+      </button>
     </div>
 
-    <!-- STEP 3: HALAMAN TERIMA KASIH -->
-    <div id="stepThankYou" class="hidden bg-white rounded-2xl shadow-sm p-6 border border-slate-200 text-center">
-      <div class="text-4xl mb-2">🤲</div>
+    <!-- STEP 3: HALAMAN TERIMA KASIH (DINAMIS DKM / LAZMU) -->
+    <div id="stepThankYou" class="hidden bg-white rounded-2xl shadow-sm p-6 border border-slate-200 text-center space-y-3">
+      <div class="text-4xl mb-1">🤲</div>
       <h2 class="text-xl font-bold text-teal-800 mb-1">Jazakumullahu Khairan</h2>
-      <p class="text-xs text-gray-600 mb-6" id="txtPesanSelesai">Semoga sedekah Anda dicatat sebagai amal jariah yang berlipat ganda.</p>
+      <p class="text-xs text-gray-600 mb-4">Semoga sedekah Anda dicatat sebagai amal jariah yang berlipat ganda.</p>
       
-      <button type="button" onclick="location.reload()" 
-        class="bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs py-2.5 px-6 rounded-xl">
-        Kembali ke Halaman Utama
-      </button>
+      <!-- Tombol Dinamis Berdasarkan Tujuan -->
+      <div id="containerTombolSelesai" class="space-y-2">
+        <!-- Dirender otomatis oleh JavaScript -->
+      </div>
     </div>
 
   </div>
@@ -143,23 +151,11 @@
     let selectedNominal = 10000;
     let appConfig = {};
     let currentTransaction = null;
-    let generatedQrisDataUrl = ""; // Menyimpan gambar QRIS berteks untuk diunduh
+    let generatedQrisDataUrl = "";
 
     window.addEventListener("DOMContentLoaded", () => {
       renderAppUI(); 
-      fetchJadwalSubuh();
       loadAppConfig();
-
-      const manualInput = document.getElementById("inputNominalManual");
-      if (manualInput) {
-        manualInput.addEventListener("input", function() {
-          if (this.value) {
-            document.querySelectorAll(".btn-nom").forEach(b => {
-              b.className = "btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all border-gray-200 bg-white text-gray-700";
-            });
-          }
-        });
-      }
     });
 
     async function loadAppConfig() {
@@ -171,13 +167,11 @@
           renderAppUI();
         }
       } catch (err) {
-        console.error("Gagal load config, menggunakan fallback.", err);
+        console.error("Gagal load config", err);
       }
     }
 
     function renderAppUI() {
-      if(appConfig.NAMA_LEMBAGA) document.getElementById("txtNamaLembaga").innerText = appConfig.NAMA_LEMBAGA;
-      if(appConfig.SLOGAN) document.getElementById("txtSlogan").innerText = appConfig.SLOGAN;
       if(appConfig.LABEL_DKM) document.getElementById("labelDkm").innerText = appConfig.LABEL_DKM;
       if(appConfig.SUB_DKM) document.getElementById("subDkm").innerText = appConfig.SUB_DKM;
       if(appConfig.LABEL_LAZMU) document.getElementById("labelLazmu").innerText = appConfig.LABEL_LAZMU;
@@ -199,7 +193,7 @@
       
       let validFound = false;
       nominals.forEach((nom) => {
-        const val = parseInt(String(nom).trim());
+        const val = parseInt(String(nom).trim().replace(/\./g, ''));
         if (isNaN(val) || val <= 0) return;
 
         validFound = true;
@@ -207,23 +201,26 @@
 
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = `btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all ${isSelected ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-gray-200 bg-white text-gray-700'}`;
+        btn.className = `btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${isSelected ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-gray-200 bg-white text-gray-700'}`;
         btn.innerText = `Rp ${val.toLocaleString('id-ID')}`;
         btn.onclick = () => pilihNominal(val, btn);
         container.appendChild(btn);
       });
+    }
 
-      if (!validFound) {
-        [10000, 20000, 50000, 100000].forEach((val) => {
-          const isSelected = val === selectedNominal;
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = `btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all ${isSelected ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-gray-200 bg-white text-gray-700'}`;
-          btn.innerText = `Rp ${val.toLocaleString('id-ID')}`;
-          btn.onclick = () => pilihNominal(val, btn);
-          container.appendChild(btn);
-        });
+    // Masking Otomatis Input Nominal (Mencegah salah ketik 1000 jadi 10000)
+    function formatRupiahMasking(input) {
+      let angka = input.value.replace(/[^,\d]/g, '').toString();
+      let split = angka.split(',');
+      let sisa = split[0].length % 3;
+      let rupiah = split[0].substr(0, sisa);
+      let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+      if (ribuan) {
+        let separator = sisa ? '.' : '';
+        rupiah += separator + ribuan.join('.');
       }
+      input.value = split[1] !== undefined ? rupiah + ',' + split[1] : rupiah;
     }
 
     function pilihTujuan(tujuan) {
@@ -232,11 +229,11 @@
       const btnLazmu = document.getElementById("btnLazmu");
 
       if (tujuan === 'dkm') {
-        btnDkm.className = "p-3 border-2 border-teal-600 bg-teal-50 text-teal-900 rounded-xl text-left transition-all";
-        btnLazmu.className = "p-3 border-2 border-gray-200 bg-white text-gray-700 rounded-xl text-left transition-all";
+        btnDkm.className = "p-3 border-2 border-teal-600 bg-teal-50 text-teal-900 rounded-xl text-left transition-all cursor-pointer";
+        btnLazmu.className = "p-3 border-2 border-gray-200 bg-white text-gray-700 rounded-xl text-left transition-all cursor-pointer";
       } else {
-        btnLazmu.className = "p-3 border-2 border-teal-600 bg-teal-50 text-teal-900 rounded-xl text-left transition-all";
-        btnDkm.className = "p-3 border-2 border-gray-200 bg-white text-gray-700 rounded-xl text-left transition-all";
+        btnLazmu.className = "p-3 border-2 border-teal-600 bg-teal-50 text-teal-900 rounded-xl text-left transition-all cursor-pointer";
+        btnDkm.className = "p-3 border-2 border-gray-200 bg-white text-gray-700 rounded-xl text-left transition-all cursor-pointer";
       }
     }
 
@@ -244,9 +241,16 @@
       selectedNominal = val;
       document.getElementById("inputNominalManual").value = "";
       document.querySelectorAll(".btn-nom").forEach(b => {
-        b.className = "btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all border-gray-200 bg-white text-gray-700";
+        b.className = "btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all border-gray-200 bg-white text-gray-700 cursor-pointer";
       });
-      btnElement.className = "btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all border-teal-600 bg-teal-50 text-teal-800";
+      btnElement.className = "btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all border-teal-600 bg-teal-50 text-teal-800 cursor-pointer";
+    }
+
+    function clearQuickSelection() {
+      selectedNominal = 0;
+      document.querySelectorAll(".btn-nom").forEach(b => {
+        b.className = "btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all border-gray-200 bg-white text-gray-700 cursor-pointer";
+      });
     }
 
     function tambahDoaChip(teks) {
@@ -255,8 +259,15 @@
     }
 
     async function prosesLanjutQris() {
-      const manual = parseInt(document.getElementById("inputNominalManual").value);
+      const manualStr = document.getElementById("inputNominalManual").value.replace(/\./g, '');
+      const manual = parseInt(manualStr);
       const nominalFinal = (manual && manual > 0) ? manual : selectedNominal;
+      
+      if (!nominalFinal || nominalFinal <= 0) {
+        alert("Mohon pilih atau masukkan nominal sedekah terlebih dahulu.");
+        return;
+      }
+
       const doaText = document.getElementById("inputDoa").value.trim();
 
       const btnSubmit = document.getElementById("btnSubmit");
@@ -273,19 +284,12 @@
 
         const res = await fetch(API_URL, {
           method: "POST",
-          headers: {
-            "Content-Type": "text/plain;charset=utf-8"
-          },
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
         });
 
         const textResponse = await res.text();
-        let data;
-        try {
-          data = JSON.parse(textResponse);
-        } catch (e) {
-          throw new Error("Respon server bukan JSON: " + textResponse);
-        }
+        let data = JSON.parse(textResponse);
 
         if (data.status === "success") {
           currentTransaction = data;
@@ -294,7 +298,6 @@
           alert("Gagal dari Server: " + data.message);
         }
       } catch (err) {
-        console.error("Detail Error:", err);
         alert("Pesan Sistem: " + err.message);
       } finally {
         btnSubmit.disabled = false;
@@ -302,7 +305,6 @@
       }
     }
 
-    // Render QR Code dengan Teks Nama Lembaga di Atasnya (Persis Contoh Anda)
     function tampilkanQrisDanStruk(data) {
       document.getElementById("stepForm").classList.add("hidden");
       document.getElementById("stepQris").classList.remove("hidden");
@@ -314,12 +316,9 @@
       document.getElementById("strukNominal").innerText = `Rp ${data.nominal.toLocaleString('id-ID')}`;
       document.getElementById("strukDoa").innerText = data.doa || "-";
 
-      // Ambil label dinamis sesuai tujuan (LABEL_DKM atau LABEL_LAZMU)
       const namaLabel = data.tujuanCode === 'dkm' ? (appConfig.LABEL_DKM || "DKM Utsman") : (appConfig.LABEL_LAZMU || "LAZMU Utsman");
-
-      // Buat Canvas Gambar QRIS berteks otomatis
       const container = document.getElementById("qrisImageContainer");
-      container.innerHTML = '<div class="text-xs text-gray-400 py-6">Membuat gambar QRIS...</div>';
+      container.innerHTML = '<div class="text-[10px] text-gray-400 py-6">Memuat QRIS...</div>';
 
       const qrisApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.qrisString)}`;
 
@@ -331,49 +330,30 @@
         canvas.height = 340;
         const ctx = canvas.getContext('2d');
 
-        // Background putih bersih
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Tulis teks nama lembaga di atas (Warna hijau teal, tebal, center)
         ctx.fillStyle = "#038b86";
         ctx.font = "bold 16px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText(namaLabel, 150, 28);
 
-        // Gambar QR Code di bawah teks
         ctx.drawImage(img, 0, 40, 300, 300);
-
-        // Simpan hasil ke variabel global untuk tombol download
         generatedQrisDataUrl = canvas.toDataURL("image/png");
 
-        // Tampilkan ke layar
-        container.innerHTML = `<img src="${generatedQrisDataUrl}" alt="QRIS ${namaLabel}" class="w-48 h-auto object-contain">`;
+        container.innerHTML = `<img src="${generatedQrisDataUrl}" alt="QRIS ${namaLabel}" class="w-44 h-auto object-contain">`;
       };
       img.src = qrisApiUrl;
-
-      // Atur Tombol WA Admin (Hanya aktif jika tujuan LAZMU)
-      const btnWa = document.getElementById("btnWaAdmin");
-      if (data.tujuanCode === "lazmu") {
-        btnWa.classList.remove("hidden");
-      } else {
-        btnWa.classList.add("hidden");
-      }
     }
 
-    // Fungsi Unduh Gambar QRIS Saja (Sesuai contoh permintaan Anda)
     function unduhQrisSaja() {
-      if (!generatedQrisDataUrl) {
-        alert("Gambar QRIS sedang dimuat, mohon tunggu sebentar.");
-        return;
-      }
+      if (!generatedQrisDataUrl) return;
       const link = document.createElement("a");
       link.download = `QRIS_${currentTransaction.tujuan.replace(/\s+/g, '_')}_${currentTransaction.idTransaksi}.png`;
       link.href = generatedQrisDataUrl;
       link.click();
     }
 
-    // Unduh Struk Digital sebagai Gambar PNG (html2canvas)
     function unduhStrukPng() {
       const element = document.getElementById("kartuStruk");
       html2canvas(element, { scale: 2, useCORS: true }).then(canvas => {
@@ -384,34 +364,76 @@
       });
     }
 
-    // Eksekusi Selesai / WA Redirect
-    function eksekusiSelesai(isWa) {
-      if (isWa && currentTransaction) {
+    // HALAMAN TERIMA KASIH DINAMIS SESUAI PERMINTAAN POINT 5
+    function selesaiTransaksi() {
+      document.getElementById("stepQris").classList.add("hidden");
+      document.getElementById("stepThankYou").classList.remove("hidden");
+
+      const containerBtn = document.getElementById("containerTombolSelesai");
+      containerBtn.innerHTML = "";
+
+      const ziswafUrl = appConfig.ZISWAF_URL || "https://s.id/lazmu";
+
+      if (currentTransaction.tujuanCode === 'dkm') {
+        // JIKA SEDEKAH KE DKM
+        containerBtn.innerHTML = `
+          <button type="button" onclick="unduhStrukPng()" class="w-full bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 font-semibold py-3 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm">
+            📥 Simpan Struk Sedekah ke Galeri
+          </button>
+          <button type="button" onclick="resetFormToHome()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3.5 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center">
+            🤲 Sedekah Lagi
+          </button>
+          <a href="${ziswafUrl}" target="_blank" class="block w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl text-xs transition text-center">
+            🌐 Kunjungi Media LAZMU
+          </a>
+        `;
+      } else {
+        // JIKA SEDEKAH KE LAZMU
         const noWa = currentTransaction.noWaAdmin || "628131626940";
-        const pesan = `Assalamu'alaikum Admin, mohon konfirmasi Sedekah Subuh:\n\n` +
+        const pesanWa = `Assalamu'alaikum Admin, mohon konfirmasi Sedekah Subuh:\n\n` +
           `• *ID Transaksi:* ${currentTransaction.idTransaksi}\n` +
           `• *Tujuan:* ${currentTransaction.tujuan}\n` +
           `• *Nominal:* Rp ${currentTransaction.nominal.toLocaleString('id-ID')}\n` +
           `• *Hajat/Doa:* _"${currentTransaction.doa}"_\n\n` +
           `Jazakumullahu khairan.`;
+        const urlWa = `https://wa.me/${noWa}?text=${encodeURIComponent(pesanWa)}`;
 
-        const urlWa = `https://wa.me/${noWa}?text=${encodeURIComponent(pesan)}`;
-        window.open(urlWa, "_blank");
+        containerBtn.innerHTML = `
+          <button type="button" onclick="unduhStrukPng()" class="w-full bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 font-semibold py-3 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm">
+            📥 Simpan Struk Sedekah ke Galeri
+          </button>
+          <a href="${urlWa}" target="_blank" class="block w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl text-xs shadow-md transition text-center flex items-center justify-center gap-2">
+            🟢 Konfirmasi Sedekah ke WA Admin
+          </a>
+          <button type="button" onclick="tampilkanMenuAkhirLazmu()" class="w-full bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 font-semibold py-3 rounded-xl text-xs transition cursor-pointer">
+            Selesai (Tanpa Konfirmasi ke Admin)
+          </button>
+        `;
       }
-
-      document.getElementById("stepQris").classList.add("hidden");
-      document.getElementById("stepThankYou").classList.remove("hidden");
     }
 
-    async function fetchJadwalSubuh() {
-      try {
-        const res = await fetch("https://api.aladhan.com/v1/timingsByCity?city=Bandung&country=Indonesia&method=2");
-        const data = await res.json();
-        const subuh = data.data.timings.Fajr;
-        document.getElementById("subuhBanner").innerHTML = `🕌 Waktu Subuh Hari Ini: <b>${subuh} WIB</b> — Mari Awali Pagi Dengan Sedekah`;
-      } catch (err) {
-        document.getElementById("subuhBanner").innerHTML = `🕌 Awali Pagi Berkah Dengan Sedekah Subuh`;
-      }
+    // Sub-menu tambahan jika tombol Selesai tanpa WA ditekan di LAZMU
+    function tampilkanMenuAkhirLazmu() {
+      const containerBtn = document.getElementById("containerTombolSelesai");
+      const ziswafUrl = appConfig.ZISWAF_URL || "https://s.id/lazmu";
+      
+      containerBtn.innerHTML = `
+        <button type="button" onclick="resetFormToHome()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3.5 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center">
+          🤲 Sedekah Lagi
+        </button>
+        <a href="${ziswafUrl}" target="_blank" class="block w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl text-xs transition text-center">
+          🌐 Kunjungi Media LAZMU
+        </a>
+      `;
+    }
+
+    function resetFormToHome() {
+      document.getElementById('sedekahForm').reset();
+      document.getElementById('stepThankYou').classList.add('hidden');
+      document.getElementById('stepForm').classList.remove('hidden');
+      clearQuickSelection();
+      selectTujuan('dkm');
+      currentTransaction = null;
     }
   </script>
 </body>
