@@ -201,6 +201,7 @@
     let appConfig = {};
     let currentTransaction = null;
     let generatedQrisDataUrl = "";
+    let precomputedStrukDataUrl = ""; // Variabel penyimpan hasil potret otomatis
 
     window.addEventListener("DOMContentLoaded", () => {
       renderAppUI(); 
@@ -399,6 +400,13 @@
         generatedQrisDataUrl = canvas.toDataURL("image/png");
 
         container.innerHTML = `<img src="${generatedQrisDataUrl}" alt="QRIS ${namaLabel}" class="w-44 h-auto object-contain">`;
+
+        // OTOMATIS POTRET STRUK SAAT POSISI SEDANG TAMPIL (STEP 2)
+        setTimeout(() => {
+          html2canvas(document.getElementById("kartuStruk"), { scale: 2, useCORS: true }).then(canvasTarget => {
+            precomputedStrukDataUrl = canvasTarget.toDataURL("image/png");
+          }).catch(e => console.error("Gagal render otomatis:", e));
+        }, 500);
       };
       img.src = qrisApiUrl;
     }
@@ -411,31 +419,16 @@
       link.click();
     }
 
-    // PERBAIKAN UTAMA: Mengklon elemen kartuStruk secara rahasia di background agar tetap bisa dibaca html2canvas meskipun posisinya sedang 'hidden'
+    // MUNCULKAN GAMBAR DARI HASIL FOTO OTOMATIS SEBELUMNYA
     function unduhStrukPng() {
-      const originalElement = document.getElementById("kartuStruk");
+      if (!precomputedStrukDataUrl) {
+        tampilkanAlert("Struk sedang disiapkan, silakan klik sekali lagi.");
+        return;
+      }
       
-      // Buat kloning elemen
-      const clone = originalElement.cloneNode(true);
-      clone.style.position = "absolute";
-      clone.style.left = "-9999px";
-      clone.style.top = "0";
-      clone.style.width = "380px";
-      document.body.appendChild(clone);
-
-      html2canvas(clone, { scale: 2, useCORS: true }).then(canvas => {
-        document.body.removeChild(clone);
-        const dataUrl = canvas.toDataURL("image/png");
-        
-        const containerGambar = document.getElementById("containerGambarHasil");
-        containerGambar.innerHTML = `<img src="${dataUrl}" alt="Struk Sedekah" class="w-full h-auto rounded-lg shadow-sm">`;
-        
-        // Tampilkan modal preview
-        document.getElementById('modalStrukPreview').classList.remove('hidden');
-      }).catch(err => {
-        if (clone.parentNode) document.body.removeChild(clone);
-        tampilkanAlert("Gagal membuat struk: " + err.message);
-      });
+      const containerGambar = document.getElementById("containerGambarHasil");
+      containerGambar.innerHTML = `<img src="${precomputedStrukDataUrl}" alt="Struk Sedekah" class="w-full h-auto rounded-lg shadow-sm">`;
+      document.getElementById('modalStrukPreview').classList.remove('hidden');
     }
 
     function kembaliKeForm() {
@@ -452,6 +445,7 @@
       clearQuickSelection();
       pilihTujuan('dkm'); 
       currentTransaction = null;
+      precomputedStrukDataUrl = "";
     }
 
     function selesaiTransaksi() {
