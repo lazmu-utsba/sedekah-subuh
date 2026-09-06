@@ -126,12 +126,10 @@
     </div>
 
   </div>
-
-  <script>
+<script>
     // =========================================================
     // CONFIGURATION
     // =========================================================
-    // TEMPELKAN URL WEB APP EXEC DARI DEPLOYMENT STANDALONE ANDA DI SINI
     const API_URL = "https://script.google.com/macros/s/AKfycbzZyU4TxxQgIysflD5RTyMV8VQ8W06iepRpsdJGoF0yJEsg-GGLqeQ_VjURu_vOfwg/exec";
 
     let selectedTujuan = "dkm";
@@ -139,10 +137,23 @@
     let appConfig = {};
     let currentTransaction = null;
 
-    // Load Config dari Apps Script & Jadwal Subuh saat Halaman Dimuat
+    // Load UI Bawaan & Config dari Apps Script saat Halaman Dimuat
     window.addEventListener("DOMContentLoaded", () => {
+      renderAppUI(); // <-- PANGGIL LANGSUNG AGAR TOMBOL NOMINAL MUNCUL INSTAN!
       fetchJadwalSubuh();
       loadAppConfig();
+
+      // Event listener saat user mengetik nominal manual
+      const manualInput = document.getElementById("inputNominalManual");
+      if (manualInput) {
+        manualInput.addEventListener("input", function() {
+          if (this.value) {
+            document.querySelectorAll(".btn-nom").forEach(b => {
+              b.className = "btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all border-gray-200 bg-white text-gray-700";
+            });
+          }
+        });
+      }
     });
 
     // 1. Fetch Config dari Apps Script (doGet)
@@ -152,7 +163,7 @@
         const data = await res.json();
         if (data.status === "success") {
           appConfig = data.config;
-          renderAppUI();
+          renderAppUI(); // Re-render jika ada settingan custom dari sheet PENGATURAN
         }
       } catch (err) {
         console.error("Gagal load config, menggunakan fallback.", err);
@@ -172,10 +183,11 @@
       const container = document.getElementById("containerNominal");
       container.innerHTML = "";
       
-      nominals.forEach((nom, idx) => {
-        const val = parseInt(nom.trim());
-        const isSelected = idx === 0;
-        if(isSelected) selectedNominal = val;
+      nominals.forEach((nom) => {
+        const val = parseInt(String(nom).trim());
+        if (isNaN(val)) return;
+
+        const isSelected = val === selectedNominal;
 
         const btn = document.createElement("button");
         btn.type = "button";
@@ -313,7 +325,7 @@
       document.getElementById("stepThankYou").classList.remove("hidden");
     }
 
-    // 7. Dynamic Subuh Prayer Time (Aladhan API - Bandingkan Lokasi Default Bandung)
+    // 7. Dynamic Subuh Prayer Time (Aladhan API)
     async function fetchJadwalSubuh() {
       try {
         const res = await fetch("https://api.aladhan.com/v1/timingsByCity?city=Bandung&country=Indonesia&method=2");
@@ -325,5 +337,6 @@
       }
     }
   </script>
+
 </body>
 </html>
