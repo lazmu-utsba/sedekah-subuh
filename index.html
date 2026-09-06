@@ -32,14 +32,14 @@
       <label class="block text-xs font-semibold text-gray-700 uppercase mb-2">Pilih Tujuan Sedekah</label>
       <div class="grid grid-cols-2 gap-3 mb-4">
         <button type="button" onclick="pilihTujuan('dkm')" id="btnDkm" 
-          class="p-3 border-2 border-teal-600 bg-teal-50 text-teal-900 rounded-xl text-left transition-all">
+          class="p-3 border-2 border-gray-200 bg-white text-gray-700 rounded-xl text-left transition-all">
           <div class="font-bold text-sm" id="labelDkm">DKM Utsman</div>
-          <div class="text-[10px] text-teal-700" id="subDkm">Operasional Masjid</div>
+          <div class="text-[10px] text-gray-500" id="subDkm">Operasional Masjid</div>
         </button>
         <button type="button" onclick="pilihTujuan('lazmu')" id="btnLazmu" 
-          class="p-3 border-2 border-gray-200 bg-white text-gray-700 rounded-xl text-left transition-all">
+          class="p-3 border-2 border-teal-600 bg-teal-50 text-teal-900 rounded-xl text-left transition-all">
           <div class="font-bold text-sm" id="labelLazmu">LAZMU Utsman</div>
-          <div class="text-[10px] text-gray-500" id="subLazmu">Sosial & Zakat</div>
+          <div class="text-[10px] text-teal-700" id="subLazmu">Sosial & Zakat</div>
         </button>
       </div>
 
@@ -177,7 +177,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycby4wLKUPDne9tmo3KY7nxcgu_vZPXCQlfYWjEsW1kT0_NvWVJ6kjtkqMrZizYwnwsCu/exec";
 
     let selectedTujuan = "lazmu";
-    let selectedNominal = 1000;
+    let selectedNominal = 5000; // Default nominal 5000 sesuai permintaan
     let appConfig = {};
     let currentTransaction = null;
     let generatedQrisDataUrl = "";
@@ -186,7 +186,7 @@
     window.addEventListener("DOMContentLoaded", () => {
       renderAppUI(); 
       loadAppConfig();
-      pilihTujuan('lazmu');
+      pilihTujuan('lazmu'); // Default tujuan LAZMU
     });
 
     function tampilkanAlert(pesan) {
@@ -341,7 +341,6 @@
     }
 
     function tampilkanQrisDanStruk(data) {
-      // Reset URL state sebelumnya setiap kali transaksi baru dibuka
       generatedQrisDataUrl = "";
       precomputedStrukDataUrl = "";
 
@@ -355,7 +354,7 @@
       document.getElementById("strukNominal").innerText = `Rp ${data.nominal.toLocaleString('id-ID')}`;
       document.getElementById("strukDoa").innerText = data.doa || "-";
 
-      const namaLabel = data.tujuanCode === 'dkm' ? (appConfig.LABEL_DKM || "DKM Utsba") : (appConfig.LABEL_LAZMU || "LAZMU Utsba");
+      const namaLabel = data.tujuanCode === 'dkm' ? (appConfig.LABEL_DKM || "DKM Utsman") : (appConfig.LABEL_LAZMU || "LAZMU Utsman");
       const container = document.getElementById("qrisImageContainer");
       container.innerHTML = '<div class="text-[10px] text-gray-400 py-6">Memuat QRIS...</div>';
 
@@ -381,13 +380,6 @@
         generatedQrisDataUrl = canvas.toDataURL("image/png");
 
         container.innerHTML = `<img src="${generatedQrisDataUrl}" alt="QRIS ${namaLabel}" class="w-44 h-auto object-contain">`;
-
-        // Potret struk secara otomatis begitu tampil di layar step 2
-        setTimeout(() => {
-          html2canvas(document.getElementById("kartuStruk"), { scale: 2, useCORS: true }).then(canvasTarget => {
-            precomputedStrukDataUrl = canvasTarget.toDataURL("image/png");
-          }).catch(e => console.error("Gagal render otomatis:", e));
-        }, 500);
       };
       img.src = qrisApiUrl;
     }
@@ -431,14 +423,22 @@
       document.getElementById('stepQris').classList.add('hidden');
       document.getElementById('stepForm').classList.remove('hidden');
       clearQuickSelection();
-      pilihTujuan('dkm'); 
+      pilihTujuan('lazmu'); 
       currentTransaction = null;
-      generatedQrisDataUrl = "";    // <-- DIPERBAIKI: Dibersihkan agar transaksi baru tidak nyangkut
-      precomputedStrukDataUrl = ""; // <-- DIPERBAIKI: Dibersihkan agar transaksi baru tidak nyangkut
+      generatedQrisDataUrl = "";
+      precomputedStrukDataUrl = "";
     }
 
     async function selesaiTransaksi() {
-      // KIRIM DATA KE BACKEND RESMI SAAT TOMBOL KONFIRMASI DITEKAN
+      // 1. Pastikan html2canvas merender kartu struk dengan sempurna SEBELUM stepQris disembunyikan
+      try {
+        const canvasTarget = await html2canvas(document.getElementById("kartuStruk"), { scale: 2, useCORS: true });
+        precomputedStrukDataUrl = canvasTarget.toDataURL("image/png");
+      } catch (err) {
+        console.error("Gagal render struk:", err);
+      }
+
+      // 2. Kirim data ke backend resmi saat tombol konfirmasi ditekan
       try {
         const payload = {
           action: "simpanTransaksi",
@@ -457,6 +457,7 @@
         console.error("Gagal mencatat transaksi final:", err);
       }
 
+      // 3. Pindah ke halaman Terima Kasih
       document.getElementById("stepQris").classList.add("hidden");
       document.getElementById("stepThankYou").classList.remove("hidden");
 
