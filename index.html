@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sedekah Subuh - LAZMU & DKM Utsman</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- QRCode.js (Render QRIS Client-Side) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- html2canvas (Render Struk PNG Client-Side) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans pb-10">
+
+  <!-- BANNER WAKTU SUBUH DINAMIS -->
+  <div id="subuhBanner" class="bg-teal-800 text-white text-xs md:text-sm py-2 px-4 text-center font-medium shadow-md">
+    🕌 Loading jadwal Subuh...
+  </div>
+
+  <div class="max-w-md mx-auto mt-4 p-4">
+    <!-- HEADER -->
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-teal-800" id="txtNamaLembaga">Sedekah Subuh</h1>
+      <p class="text-xs text-gray-600 mt-1" id="txtSlogan">Masjid Utsman Bin Affan</p>
+    </div>
+
+    <!-- STEP 1: FORM INPUT TRANSAKSI -->
+    <div id="stepForm" class="bg-white rounded-2xl shadow-sm p-5 border border-slate-200">
+      
+      <!-- Pilih Tujuan -->
+      <label class="block text-xs font-semibold text-gray-700 uppercase mb-2">Pilih Tujuan Sedekah</label>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <button type="button" onclick="pilihTujuan('dkm')" id="btnDkm" 
+          class="p-3 border-2 border-teal-600 bg-teal-50 text-teal-900 rounded-xl text-left transition-all">
+          <div class="font-bold text-sm" id="labelDkm">DKM Utsman</div>
+          <div class="text-[10px] text-teal-700" id="subDkm">Operasional Masjid</div>
+        </button>
+        <button type="button" onclick="pilihTujuan('lazmu')" id="btnLazmu" 
+          class="p-3 border-2 border-gray-200 bg-white text-gray-700 rounded-xl text-left transition-all">
+          <div class="font-bold text-sm" id="labelLazmu">LAZMU Utsman</div>
+          <div class="text-[10px] text-gray-500" id="subLazmu">Sosial & Zakat</div>
+        </button>
+      </div>
+
+      <!-- Pilih Nominal Quick-Pick -->
+      <label class="block text-xs font-semibold text-gray-700 uppercase mb-2">Pilih Nominal</label>
+      <div class="grid grid-cols-2 gap-2 mb-3" id="containerNominal">
+        <!-- Pilihan nominal dirender otomatis via JS -->
+      </div>
+      <input type="number" id="inputNominalManual" placeholder="Nominal Lainnya (Rp)" 
+        class="w-full p-2.5 text-sm border border-gray-300 rounded-xl mb-4 focus:ring-2 focus:ring-teal-500 outline-none">
+
+      <!-- Chip Doa Cepat & Input Doa -->
+      <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Doa / Hajat <span class="text-gray-400 font-normal">(Opsional)</span></label>
+      <div class="flex flex-wrap gap-1.5 mb-2">
+        <button type="button" onclick="tambahDoaChip('Semoga keluarga diberikan kesehatan & keberkahan.')" class="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 py-1 px-2.5 rounded-full border border-slate-300">🤲 Keberkahan Keluarga</button>
+        <button type="button" onclick="tambahDoaChip('Semoga dilancarkan rezeki & usahanya.')" class="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 py-1 px-2.5 rounded-full border border-slate-300">🤲 Kelancaran Rezeki</button>
+        <button type="button" onclick="tambahDoaChip('Semoga diberikan kesembuhan dari penyakit.')" class="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 py-1 px-2.5 rounded-full border border-slate-300">🤲 Kesembuhan</button>
+      </div>
+      <textarea id="inputDoa" rows="2" placeholder="Tulis doa jika ingin diaminkan (atau kosongkan untuk sedekah anonim)..." 
+        class="w-full p-2.5 text-sm border border-gray-300 rounded-xl mb-5 focus:ring-2 focus:ring-teal-500 outline-none"></textarea>
+
+      <button type="button" onclick="prosesLanjutQris()" id="btnSubmit"
+        class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl text-sm shadow-md transition-all">
+        Lanjut ke QRIS
+      </button>
+    </div>
+
+    <!-- STEP 2: STRUK & QRIS DISPLAY -->
+    <div id="stepQris" class="hidden bg-white rounded-2xl shadow-sm p-5 border border-slate-200 text-center">
+      
+      <!-- Kartu Struk yang akan di-download sebagai PNG -->
+      <div id="kartuStruk" class="p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-left">
+        <div class="text-center border-b pb-3 mb-3 border-slate-200">
+          <h2 class="font-bold text-teal-800 text-base" id="strukLembaga">Sedekah Subuh</h2>
+          <p class="text-[11px] text-gray-500" id="strukTujuan">DKM Utsman</p>
+        </div>
+        
+        <div class="text-xs space-y-1.5 text-gray-700">
+          <div class="flex justify-between"><span>ID Transaksi:</span><span class="font-bold" id="strukId">-</span></div>
+          <div class="flex justify-between"><span>Tanggal:</span><span id="strukTanggal">-</span></div>
+          <div class="flex justify-between"><span>Nominal:</span><span class="font-bold text-teal-800 text-sm" id="strukNominal">-</span></div>
+          <div class="pt-2 border-t border-slate-200 mt-2">
+            <span class="font-semibold block mb-0.5">Doa / Hajat:</span>
+            <p class="italic text-gray-600 text-[11px]" id="strukDoa">-</p>
+          </div>
+        </div>
+
+        <!-- Container QR Code -->
+        <div class="flex flex-col items-center justify-center mt-4 pt-3 border-t border-slate-200">
+          <div id="qrcode" class="p-2 bg-white rounded-lg border border-slate-200"></div>
+          <p class="text-[10px] text-gray-400 mt-2">Scan menggunakan Mobile Banking / E-Wallet</p>
+        </div>
+      </div>
+
+      <!-- Tombol Unduh Struk -->
+      <button type="button" onclick="unduhStrukPng()" 
+        class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2.5 rounded-xl mb-4 flex items-center justify-center gap-1">
+        📥 Simpan Struk ke Galeri (PNG)
+      </button>
+
+      <!-- Pilihan Aksi Selesai / WA -->
+      <div class="space-y-2 pt-2 border-t border-slate-100">
+        <button type="button" id="btnWaAdmin" onclick="eksekusiSelesai(true)" 
+          class="hidden w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow">
+          🟢 Konfirmasi ke WA Admin
+        </button>
+        <button type="button" onclick="eksekusiSelesai(false)" 
+          class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs">
+          🤫 Sedekah Rahasia (Tanpa WA)
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: HALAMAN TERIMA KASIH -->
+    <div id="stepThankYou" class="hidden bg-white rounded-2xl shadow-sm p-6 border border-slate-200 text-center">
+      <div class="text-4xl mb-2">🤲</div>
+      <h2 class="text-xl font-bold text-teal-800 mb-1">Jazakumullahu Khairan</h2>
+      <p class="text-xs text-gray-600 mb-6" id="txtPesanSelesai">Semoga sedekah Anda dicatat sebagai amal jariah yang berlipat ganda.</p>
+      
+      <button type="button" onclick="location.reload()" 
+        class="bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs py-2.5 px-6 rounded-xl">
+        Kembali ke Halaman Utama
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    // =========================================================
+    // CONFIGURATION
+    // =========================================================
+    // TEMPELKAN URL WEB APP EXEC DARI DEPLOYMENT STANDALONE ANDA DI SINI
+    const API_URL = "https://script.google.com/macros/s/AKfycbzZyU4TxxQgIysflD5RTyMV8VQ8W06iepRpsdJGoF0yJEsg-GGLqeQ_VjURu_vOfwg/exec";
+
+    let selectedTujuan = "dkm";
+    let selectedNominal = 10000;
+    let appConfig = {};
+    let currentTransaction = null;
+
+    // Load Config dari Apps Script & Jadwal Subuh saat Halaman Dimuat
+    window.addEventListener("DOMContentLoaded", () => {
+      fetchJadwalSubuh();
+      loadAppConfig();
+    });
+
+    // 1. Fetch Config dari Apps Script (doGet)
+    async function loadAppConfig() {
+      try {
+        const res = await fetch(`${API_URL}?action=getConfig`);
+        const data = await res.json();
+        if (data.status === "success") {
+          appConfig = data.config;
+          renderAppUI();
+        }
+      } catch (err) {
+        console.error("Gagal load config, menggunakan fallback.", err);
+      }
+    }
+
+    function renderAppUI() {
+      if(appConfig.NAMA_LEMBAGA) document.getElementById("txtNamaLembaga").innerText = appConfig.NAMA_LEMBAGA;
+      if(appConfig.SLOGAN) document.getElementById("txtSlogan").innerText = appConfig.SLOGAN;
+      if(appConfig.LABEL_DKM) document.getElementById("labelDkm").innerText = appConfig.LABEL_DKM;
+      if(appConfig.SUB_DKM) document.getElementById("subDkm").innerText = appConfig.SUB_DKM;
+      if(appConfig.LABEL_LAZMU) document.getElementById("labelLazmu").innerText = appConfig.LABEL_LAZMU;
+      if(appConfig.SUB_LAZMU) document.getElementById("subLazmu").innerText = appConfig.SUB_LAZMU;
+
+      // Render Pilihan Nominal
+      const nominals = appConfig.PILIHAN_NOMINAL ? appConfig.PILIHAN_NOMINAL.split(",") : [10000, 20000, 50000, 100000];
+      const container = document.getElementById("containerNominal");
+      container.innerHTML = "";
+      
+      nominals.forEach((nom, idx) => {
+        const val = parseInt(nom.trim());
+        const isSelected = idx === 0;
+        if(isSelected) selectedNominal = val;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all ${isSelected ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-gray-200 bg-white text-gray-700'}`;
+        btn.innerText = `Rp ${val.toLocaleString('id-ID')}`;
+        btn.onclick = () => pilihNominal(val, btn);
+        container.appendChild(btn);
+      });
+    }
+
+    // 2. Tampilan UI Logic
+    function pilihTujuan(tujuan) {
+      selectedTujuan = tujuan;
+      const btnDkm = document.getElementById("btnDkm");
+      const btnLazmu = document.getElementById("btnLazmu");
+
+      if (tujuan === 'dkm') {
+        btnDkm.className = "p-3 border-2 border-teal-600 bg-teal-50 text-teal-900 rounded-xl text-left transition-all";
+        btnLazmu.className = "p-3 border-2 border-gray-200 bg-white text-gray-700 rounded-xl text-left transition-all";
+      } else {
+        btnLazmu.className = "p-3 border-2 border-teal-600 bg-teal-50 text-teal-900 rounded-xl text-left transition-all";
+        btnDkm.className = "p-3 border-2 border-gray-200 bg-white text-gray-700 rounded-xl text-left transition-all";
+      }
+    }
+
+    function pilihNominal(val, btnElement) {
+      selectedNominal = val;
+      document.getElementById("inputNominalManual").value = "";
+      document.querySelectorAll(".btn-nom").forEach(b => {
+        b.className = "btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all border-gray-200 bg-white text-gray-700";
+      });
+      btnElement.className = "btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all border-teal-600 bg-teal-50 text-teal-800";
+    }
+
+    function tambahDoaChip(teks) {
+      const area = document.getElementById("inputDoa");
+      area.value = area.value ? area.value + " " + teks : teks;
+    }
+
+    // 3. Proses Transaksi & Request Backend (doPost)
+    async function prosesLanjutQris() {
+      const manual = parseInt(document.getElementById("inputNominalManual").value);
+      const nominalFinal = (manual && manual > 0) ? manual : selectedNominal;
+      const doaText = document.getElementById("inputDoa").value.trim();
+
+      const btnSubmit = document.getElementById("btnSubmit");
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = "Memproses QRIS...";
+
+      try {
+        const payload = {
+          action: "simpanTransaksi",
+          tujuan: selectedTujuan,
+          nominal: nominalFinal,
+          doa: doaText
+        };
+
+        const res = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.status === "success") {
+          currentTransaction = data;
+          tampilkanQrisDanStruk(data);
+        } else {
+          alert("Gagal: " + data.message);
+        }
+      } catch (err) {
+        alert("Terjadi kesalahan koneksi ke server.");
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = "Lanjut ke QRIS";
+      }
+    }
+
+    // 4. Render QR Code Client-Side & Tampilkan Step 2
+    function tampilkanQrisDanStruk(data) {
+      document.getElementById("stepForm").classList.add("hidden");
+      document.getElementById("stepQris").classList.remove("hidden");
+
+      document.getElementById("strukLembaga").innerText = appConfig.NAMA_LEMBAGA || "Sedekah Subuh";
+      document.getElementById("strukTujuan").innerText = data.tujuan;
+      document.getElementById("strukId").innerText = data.idTransaksi;
+      document.getElementById("strukTanggal").innerText = data.timestamp;
+      document.getElementById("strukNominal").innerText = `Rp ${data.nominal.toLocaleString('id-ID')}`;
+      document.getElementById("strukDoa").innerText = data.doa || "-";
+
+      // Render QRIS
+      const qrContainer = document.getElementById("qrcode");
+      qrContainer.innerHTML = "";
+      new QRCode(qrContainer, {
+        text: data.qrisString,
+        width: 180,
+        height: 180
+      });
+
+      // Atur Tombol WA Admin (Hanya aktif jika tujuan LAZMU)
+      const btnWa = document.getElementById("btnWaAdmin");
+      if (data.tujuanCode === "lazmu") {
+        btnWa.classList.remove("hidden");
+      } else {
+        btnWa.classList.add("hidden");
+      }
+    }
+
+    // 5. Unduh Struk Digital sebagai Gambar PNG (html2canvas)
+    function unduhStrukPng() {
+      const element = document.getElementById("kartuStruk");
+      html2canvas(element, { scale: 2 }).then(canvas => {
+        const link = document.createElement("a");
+        link.download = `Struk_Sedekah_${currentTransaction.idTransaksi}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }
+
+    // 6. Eksekusi Selesai / WA Redirect
+    function eksekusiSelesai(isWa) {
+      if (isWa && currentTransaction) {
+        const noWa = currentTransaction.noWaAdmin || "6281234567890";
+        const pesan = `Assalamu'alaikum Admin, mohon konfirmasi Sedekah Subuh:\n\n` +
+          `• *ID Transaksi:* ${currentTransaction.idTransaksi}\n` +
+          `• *Tujuan:* ${currentTransaction.tujuan}\n` +
+          `• *Nominal:* Rp ${currentTransaction.nominal.toLocaleString('id-ID')}\n` +
+          `• *Hajat/Doa:* _"${currentTransaction.doa}"_\n\n` +
+          `Jazakumullahu khairan.`;
+
+        const urlWa = `https://wa.me/${noWa}?text=${encodeURIComponent(pesan)}`;
+        window.open(urlWa, "_blank");
+      }
+
+      document.getElementById("stepQris").classList.add("hidden");
+      document.getElementById("stepThankYou").classList.remove("hidden");
+    }
+
+    // 7. Dynamic Subuh Prayer Time (Aladhan API - Bandingkan Lokasi Default Bandung)
+    async function fetchJadwalSubuh() {
+      try {
+        const res = await fetch("https://api.aladhan.com/v1/timingsByCity?city=Bandung&country=Indonesia&method=2");
+        const data = await res.json();
+        const subuh = data.data.timings.Fajr;
+        document.getElementById("subuhBanner").innerHTML = `🕌 Waktu Subuh Hari Ini: <b>${subuh} WIB</b> — Mari Awali Pagi Dengan Sedekah`;
+      } catch (err) {
+        document.getElementById("subuhBanner").innerHTML = `🕌 Awali Pagi Berkah Dengan Sedekah Subuh`;
+      }
+    }
+  </script>
+</body>
+</html>
