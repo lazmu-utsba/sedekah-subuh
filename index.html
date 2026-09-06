@@ -354,7 +354,7 @@
       document.getElementById("strukNominal").innerText = `Rp ${data.nominal.toLocaleString('id-ID')}`;
       document.getElementById("strukDoa").innerText = data.doa || "-";
 
-      const namaLabel = data.tujuanCode === 'dkm' ? (appConfig.LABEL_DKM || "DKM Utsman") : (appConfig.LABEL_LAZMU || "LAZMU Utsman");
+      const namaLabel = data.tujuanCode === 'dkm' ? (appConfig.LABEL_DKM || "DKM Utsba") : (appConfig.LABEL_LAZMU || "LAZMU Utsba");
       const container = document.getElementById("qrisImageContainer");
       container.innerHTML = '<div class="text-[10px] text-gray-400 py-6">Memuat QRIS...</div>';
 
