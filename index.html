@@ -6,8 +6,6 @@
   <title>Sedekah Subuh - LAZMU & DKM Utsman</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- QRCode.js (Render QRIS Client-Side) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- html2canvas (Render Struk PNG Client-Side) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -87,9 +85,11 @@
           </div>
         </div>
 
-        <!-- Container QR Code -->
+        <!-- Container QR Code Gambar -->
         <div class="flex flex-col items-center justify-center mt-4 pt-3 border-t border-slate-200">
-          <div id="qrcode" class="p-2 bg-white rounded-lg border border-slate-200"></div>
+          <div class="p-2 bg-white rounded-lg border border-slate-200">
+            <img id="imgQris" src="" alt="QRIS Code" class="w-48 h-48 object-contain">
+          </div>
           <p class="text-[10px] text-gray-400 mt-2">Scan menggunakan Mobile Banking / E-Wallet</p>
         </div>
       </div>
@@ -131,7 +131,7 @@
     // =========================================================
     // CONFIGURATION
     // =========================================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbxB9D0--32Szfg5Hhvao84QOqy2khzcgwO_dUyuCUYt1lLygHE0TqMI7sp_4sSkeUA/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzZyU4TxxQgIysflD5RTyMV8VQ8W06iepRpsdJGoF0yJEsg-GGLqeQ_VjURu_vOfwg/exec";
 
     let selectedTujuan = "dkm";
     let selectedNominal = 10000;
@@ -286,14 +286,14 @@
         }
       } catch (err) {
         console.error("Detail Error:", err);
-        alert("Gagal memproses QRIS: " + err.message);
+        alert("Terjadi kesalahan koneksi ke server.");
       } finally {
         btnSubmit.disabled = false;
         btnSubmit.innerText = "Lanjut ke QRIS";
       }
     }
 
-    // 4. Render QR Code Client-Side & Tampilkan Step 2
+    // 4. Render QR Code Via API Gambar QRServer (100% Bebas Security Error file:///)
     function tampilkanQrisDanStruk(data) {
       document.getElementById("stepForm").classList.add("hidden");
       document.getElementById("stepQris").classList.remove("hidden");
@@ -305,15 +305,9 @@
       document.getElementById("strukNominal").innerText = `Rp ${data.nominal.toLocaleString('id-ID')}`;
       document.getElementById("strukDoa").innerText = data.doa || "-";
 
-      // Render QRIS (Disesuaikan Error Correction agar muat string QRIS panjang BSI)
-      const qrContainer = document.getElementById("qrcode");
-      qrContainer.innerHTML = "";
-      new QRCode(qrContainer, {
-        text: data.qrisString,
-        width: 180,
-        height: 180,
-        correctLevel: QRCode.CorrectLevel.M
-      });
+      // Panggil API QRServer untuk membuat gambar QRIS secara murni
+      const qrisUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.qrisString)}`;
+      document.getElementById("imgQris").src = qrisUrl;
 
       // Atur Tombol WA Admin (Hanya aktif jika tujuan LAZMU)
       const btnWa = document.getElementById("btnWaAdmin");
@@ -327,7 +321,7 @@
     // 5. Unduh Struk Digital sebagai Gambar PNG (html2canvas)
     function unduhStrukPng() {
       const element = document.getElementById("kartuStruk");
-      html2canvas(element, { scale: 2 }).then(canvas => {
+      html2canvas(element, { scale: 2, useCORS: true }).then(canvas => {
         const link = document.createElement("a");
         link.download = `Struk_Sedekah_${currentTransaction.idTransaksi}.png`;
         link.href = canvas.toDataURL("image/png");
