@@ -157,7 +157,7 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- MODAL PREVIEW STRUK (SOLUSI ANTI-GAGAL SAVE DI HP) -->
+  <!-- MODAL PREVIEW STRUK -->
   <!-- ========================================== -->
   <div id="modalStrukPreview" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/80 backdrop-blur-sm">
     <div class="bg-white rounded-2xl shadow-2xl z-10 w-full max-w-sm p-5 text-center border border-slate-100 flex flex-col max-h-[90vh]">
@@ -411,10 +411,20 @@
       link.click();
     }
 
-    // SOLUSI UTAMA: Merender struk jadi gambar dan menampilkannya di modal agar bisa ditekan lama (Long-press) & Simpan di HP
+    // PERBAIKAN UTAMA: Mengklon elemen kartuStruk secara rahasia di background agar tetap bisa dibaca html2canvas meskipun posisinya sedang 'hidden'
     function unduhStrukPng() {
-      const element = document.getElementById("kartuStruk");
-      html2canvas(element, { scale: 2, useCORS: true }).then(canvas => {
+      const originalElement = document.getElementById("kartuStruk");
+      
+      // Buat kloning elemen
+      const clone = originalElement.cloneNode(true);
+      clone.style.position = "absolute";
+      clone.style.left = "-9999px";
+      clone.style.top = "0";
+      clone.style.width = "380px";
+      document.body.appendChild(clone);
+
+      html2canvas(clone, { scale: 2, useCORS: true }).then(canvas => {
+        document.body.removeChild(clone);
         const dataUrl = canvas.toDataURL("image/png");
         
         const containerGambar = document.getElementById("containerGambarHasil");
@@ -423,6 +433,7 @@
         // Tampilkan modal preview
         document.getElementById('modalStrukPreview').classList.remove('hidden');
       }).catch(err => {
+        if (clone.parentNode) document.body.removeChild(clone);
         tampilkanAlert("Gagal membuat struk: " + err.message);
       });
     }
