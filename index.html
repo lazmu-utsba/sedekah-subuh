@@ -310,7 +310,7 @@
 
       try {
         const payload = {
-          action: "simpanTransaksi",
+          action: "buatQris",
           tujuan: selectedTujuan,
           nominal: nominalFinal,
           doa: doaText
@@ -436,7 +436,26 @@
       precomputedStrukDataUrl = ""; // <-- DIPERBAIKI: Dibersihkan agar transaksi baru tidak nyangkut
     }
 
-    function selesaiTransaksi() {
+    async function selesaiTransaksi() {
+      // KIRIM DATA KE BACKEND RESMI SAAT TOMBOL KONFIRMASI DITEKAN
+      try {
+        const payload = {
+          action: "simpanTransaksi",
+          idTransaksi: currentTransaction.idTransaksi,
+          tujuan: currentTransaction.tujuanCode,
+          nominal: currentTransaction.nominal,
+          doa: currentTransaction.doa
+        };
+
+        await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        console.error("Gagal mencatat transaksi final:", err);
+      }
+
       document.getElementById("stepQris").classList.add("hidden");
       document.getElementById("stepThankYou").classList.remove("hidden");
 
