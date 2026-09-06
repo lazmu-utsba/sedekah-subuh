@@ -126,7 +126,8 @@
     </div>
 
   </div>
-<script>
+
+  <script>
     // =========================================================
     // CONFIGURATION
     // =========================================================
@@ -139,7 +140,7 @@
 
     // Load UI Bawaan & Config dari Apps Script saat Halaman Dimuat
     window.addEventListener("DOMContentLoaded", () => {
-      renderAppUI(); // <-- PANGGIL LANGSUNG AGAR TOMBOL NOMINAL MUNCUL INSTAN!
+      renderAppUI(); // Render awal instan
       fetchJadwalSubuh();
       loadAppConfig();
 
@@ -163,7 +164,7 @@
         const data = await res.json();
         if (data.status === "success") {
           appConfig = data.config;
-          renderAppUI(); // Re-render jika ada settingan custom dari sheet PENGATURAN
+          renderAppUI(); // Re-render jika ada settingan custom
         }
       } catch (err) {
         console.error("Gagal load config, menggunakan fallback.", err);
@@ -178,16 +179,30 @@
       if(appConfig.LABEL_LAZMU) document.getElementById("labelLazmu").innerText = appConfig.LABEL_LAZMU;
       if(appConfig.SUB_LAZMU) document.getElementById("subLazmu").innerText = appConfig.SUB_LAZMU;
 
-      // Render Pilihan Nominal
-      const nominals = appConfig.PILIHAN_NOMINAL ? appConfig.PILIHAN_NOMINAL.split(",") : [10000, 20000, 50000, 100000];
+      // PARSER NOMINAL DENGAN PENGAMAN OTOMATIS
+      let rawNom = String(appConfig.PILIHAN_NOMINAL || "").trim();
+      let nominals = [];
+
+      if (rawNom.includes("|")) {
+        nominals = rawNom.split("|");
+      } else if (rawNom.includes(",")) {
+        nominals = rawNom.split(",");
+      } else {
+        // Fallback otomatis jika format di Google Sheets tergabung/rusak
+        nominals = [10000, 20000, 50000, 100000];
+      }
+
       const container = document.getElementById("containerNominal");
       container.innerHTML = "";
       
-      nominals.forEach((nom) => {
+      let validFound = false;
+      nominals.forEach((nom, idx) => {
         const val = parseInt(String(nom).trim());
-        if (isNaN(val)) return;
+        if (isNaN(val) || val <= 0) return;
 
-        const isSelected = val === selectedNominal;
+        validFound = true;
+        const isSelected = (idx === 0 && !selectedNominal) || val === selectedNominal;
+        if (idx === 0 && !selectedNominal) selectedNominal = val;
 
         const btn = document.createElement("button");
         btn.type = "button";
@@ -196,6 +211,19 @@
         btn.onclick = () => pilihNominal(val, btn);
         container.appendChild(btn);
       });
+
+      // Jika tidak ada nominal valid yang bisa diparse, render 4 tombol default
+      if (!validFound) {
+        [10000, 20000, 50000, 100000].forEach((val, idx) => {
+          const isSelected = val === selectedNominal;
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = `btn-nom p-2.5 text-xs font-bold rounded-xl border transition-all ${isSelected ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-gray-200 bg-white text-gray-700'}`;
+          btn.innerText = `Rp ${val.toLocaleString('id-ID')}`;
+          btn.onclick = () => pilihNominal(val, btn);
+          container.appendChild(btn);
+        });
+      }
     }
 
     // 2. Tampilan UI Logic
@@ -337,6 +365,5 @@
       }
     }
   </script>
-
 </body>
 </html>
