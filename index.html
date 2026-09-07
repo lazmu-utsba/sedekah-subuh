@@ -444,12 +444,14 @@
 
     function tambahDoaChip(teks) {
       const area = document.getElementById("inputDoa");
-      const currentVal = area.value.trim();
+      let currentVal = area.value.trim();
   
-      if (!currentVal) {
-        area.value = teks;
-      } else if (!currentVal.includes(teks)) {
-        area.value = currentVal + " " + teks;
+      if (currentVal.includes(teks)) {
+        // (Toggle Off)
+        area.value = currentVal.replace(teks, "").replace(/\s\s+/g, ' ').trim();
+      } else {
+        // (Toggle On)
+        area.value = currentVal ? currentVal + " " + teks : teks;
       }
     }
 
