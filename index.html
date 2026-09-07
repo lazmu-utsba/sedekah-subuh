@@ -444,7 +444,13 @@
 
     function tambahDoaChip(teks) {
       const area = document.getElementById("inputDoa");
-      area.value = area.value ? area.value + " " + teks : teks;
+      const currentVal = area.value.trim();
+  
+      if (!currentVal) {
+        area.value = teks;
+      } else if (!currentVal.includes(teks)) {
+        area.value = currentVal + " " + teks;
+      }
     }
 
     async function prosesLanjutQris() {
