@@ -231,6 +231,7 @@
     let appConfig = {};
     let currentTransaction = null;
     let generatedQrisDataUrl = "";
+    let staticStrukQrisDataUrl = ""; // QRIS Statis khusus untuk Struk
     let precomputedStrukDataUrl = "";
 
     window.addEventListener("DOMContentLoaded", () => {
@@ -505,6 +506,7 @@
 
     function tampilkanQrisDanStruk(data) {
       generatedQrisDataUrl = "";
+      staticStrukQrisDataUrl = "";
       precomputedStrukDataUrl = "";
 
       document.getElementById("stepForm").classList.add("hidden");
@@ -521,31 +523,45 @@
       const container = document.getElementById("qrisImageContainer");
       container.innerHTML = '<div class="text-[10px] text-gray-400 py-6">Memuat QRIS...</div>';
 
-      const qrisOri = data.qrisOri || data.qrisString;
-      const qrisApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrisOri)}`;
+      // 1. QRIS Dinamis (untuk layar & tombol unduh QRIS saja)
+      const qrisDinamisUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.qrisString)}`;
+      
+      // 2. QRIS Statis/Ori (khusus untuk struk)
+      const qrisOriString = data.qrisOri || data.qrisString;
+      const qrisStatisUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrisOriString)}`;
 
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = function() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 300;
-        canvas.height = 340;
-        const ctx = canvas.getContext('2d');
+      const renderQR = (url, isStatis) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 300;
+          canvas.height = 340;
+          const ctx = canvas.getContext('2d');
 
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.fillStyle = "#038b86";
-        ctx.font = "bold 16px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(namaLabel, 150, 28);
+          ctx.fillStyle = "#038b86";
+          ctx.font = "bold 16px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(namaLabel, 150, 28);
 
-        ctx.drawImage(img, 0, 40, 300, 300);
-        generatedQrisDataUrl = canvas.toDataURL("image/png");
-
-        container.innerHTML = `<img src="${generatedQrisDataUrl}" alt="QRIS ${namaLabel}" class="w-44 h-auto object-contain">`;
+          ctx.drawImage(img, 0, 40, 300, 300);
+          
+          if (isStatis) {
+            staticStrukQrisDataUrl = canvas.toDataURL("image/png");
+          } else {
+            generatedQrisDataUrl = canvas.toDataURL("image/png");
+            container.innerHTML = `<img id="imgQrisDisplay" src="${generatedQrisDataUrl}" alt="QRIS ${namaLabel}" class="w-44 h-auto object-contain">`;
+          }
+        };
+        img.src = url;
       };
-      img.src = qrisApiUrl;
+
+      // Render dua-duanya secara paralel di background
+      renderQR(qrisDinamisUrl, false);
+      renderQR(qrisStatisUrl, true);
     }
 
     function unduhQrisSaja() {
@@ -593,13 +609,27 @@
       
       currentTransaction = null;
       generatedQrisDataUrl = "";
+      staticStrukQrisDataUrl = "";
       precomputedStrukDataUrl = "";
     }
 
     async function selesaiTransaksi() {
       try {
+        // Trik: Tukar sementara gambar QR di layar menjadi QRIS Statis khusus saat difoto untuk Struk
+        const imgDisplay = document.getElementById("imgQrisDisplay");
+        let originalSrc = "";
+        if (imgDisplay && staticStrukQrisDataUrl) {
+          originalSrc = imgDisplay.src;
+          imgDisplay.src = staticStrukQrisDataUrl;
+        }
+
         const canvasTarget = await html2canvas(document.getElementById("kartuStruk"), { scale: 2, useCORS: true });
         precomputedStrukDataUrl = canvasTarget.toDataURL("image/png");
+
+        // Kembalikan gambar ke QRIS Dinamis semula agar tampilan layar tidak berubah
+        if (imgDisplay && originalSrc) {
+          imgDisplay.src = originalSrc;
+        }
       } catch (err) {
         console.error("Gagal render struk:", err);
       }
