@@ -521,9 +521,7 @@
       const container = document.getElementById("qrisImageContainer");
       container.innerHTML = '<div class="text-[10px] text-gray-400 py-6">Memuat QRIS...</div>';
 
-      const qrisOri = data.tujuanCode === 'dkm' 
-        ? (appConfig.QRIS_RAW_DKM || data.qrisString) 
-        : (appConfig.QRIS_RAW_LAZMU || data.qrisString);
+      const qrisOri = data.qrisOri || data.qrisString;
       const qrisApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrisOri)}`;
 
       const img = new Image();
