@@ -175,7 +175,7 @@
       </div>
 
       <!-- Tombol Utama: Saya Sudah Transfer dan Lanjutkan Proses -->
-      <button type="button" onclick="selesaiTransaksi()" 
+      <button type="button" onclick="selesaiTransaksi()" id="btnSelesai"
         class="w-full bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold py-3 rounded-xl mb-3 shadow-md flex items-center justify-center gap-1.5 cursor-pointer">
         <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
         Saya Sudah Transfer & Lanjutkan
@@ -582,6 +582,12 @@
     function resetFormToHome() {
       document.getElementById('inputNominalManual').value = '';
       document.getElementById('inputDoa').value = '';
+
+      // Reset semua warna chip doa kembali ke normal (abu-abu)[cite: 9]
+      document.querySelectorAll(".doa-chip").forEach(btn => {
+        btn.className = "doa-chip flex items-center gap-1 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-2.5 rounded-full border border-slate-300 transition-all cursor-pointer";
+      });
+
       document.getElementById('stepThankYou').classList.add('hidden');
       document.getElementById('stepQris').classList.add('hidden');
       document.getElementById('stepForm').classList.remove('hidden');
@@ -596,6 +602,20 @@
     }
 
     async function selesaiTransaksi() {
+      const btnSelesai = document.getElementById("btnSelesai");
+      
+      // Ubah teks tombol menjadi loading agar pengguna tahu sistem sedang memproses
+      if (btnSelesai) {
+        btnSelesai.disabled = true;
+        btnSelesai.innerHTML = `
+          <svg class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Memproses Struk & Transaksi...
+        `;
+      }
+
       try {
         const canvasTarget = await html2canvas(document.getElementById("kartuStruk"), { scale: 2, useCORS: true });
         precomputedStrukDataUrl = canvasTarget.toDataURL("image/png");
@@ -619,6 +639,15 @@
         });
       } catch (err) {
         console.error("Gagal mencatat transaksi final:", err);
+      }
+
+      // Kembalikan tombol ke bentuk semula (jaga-jaga jika kembali nanti)
+      if (btnSelesai) {
+        btnSelesai.disabled = false;
+        btnSelesai.innerHTML = `
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          Saya Sudah Transfer & Lanjutkan
+        `;
       }
 
       document.getElementById("stepQris").classList.add("hidden");
