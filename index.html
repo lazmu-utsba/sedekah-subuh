@@ -13,7 +13,7 @@
 </head>
 <body class="bg-slate-100 min-h-screen font-sans pb-10">
 
-  <!-- WELCOME MODAL INTERAKTIF (SLIDER GESER KE KANAN) -->
+  <!-- WELCOME MODAL INTERAKTIF (SLIDER) -->
   <div id="welcome-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center space-y-4 relative overflow-hidden border border-slate-100 transform transition-all">
       
@@ -63,7 +63,7 @@
 
   <div class="max-w-md mx-auto mt-4 p-4">
     
-    <!-- HEADER INSTITUSI (LATAR BELAKANG PUTIH BERSIH) -->
+    <!-- HEADER -->
     <div class="bg-white rounded-2xl shadow-sm p-5 border border-slate-200 text-center mb-4">
       <div class="flex justify-center mb-3">
         <img src="https://lh3.googleusercontent.com/d/1CnBKrSHF_nKrMw1IeM6awuhtOn6TuOAJ" alt="Logo LAZMU" class="w-16 h-16 object-contain rounded-full shadow-sm border border-slate-100 bg-white p-1">
@@ -135,7 +135,12 @@
     <!-- STEP 2: STRUK & QRIS DISPLAY -->
     <div id="stepQris" class="hidden bg-white rounded-2xl shadow-sm p-5 border border-slate-200 text-center">
       
-      <!-- Kartu Struk yang akan di-render -->
+      <!-- Countdown Timer Badge (3 Menit) -->
+      <div id="qrisTimerBox" class="mb-3 text-center bg-red-50 border border-red-200 py-1.5 px-4 rounded-xl inline-block shadow-sm">
+        <span class="text-xs font-bold text-red-600">Berlaku hingga <span id="timerCountdown">03:00</span></span>
+      </div>
+
+      <!-- Kartu Struk -->
       <div id="kartuStruk" class="p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-left">
         <div class="text-center border-b pb-3 mb-3 border-slate-200">
           <h2 class="font-bold text-teal-800 text-base" id="strukLembaga">Sedekah Subuh</h2>
@@ -152,10 +157,10 @@
           </div>
         </div>
 
-        <!-- Container QR Code dengan Lebar Presisi -->
+        <!-- Container QR Code -->
         <div class="flex flex-col items-center justify-center mt-4 pt-3 border-t border-slate-200">
           <div id="qrisImageContainer" class="p-2 bg-white rounded-lg border border-slate-200 flex flex-col items-center w-52">
-            <!-- Render QRIS via Canvas dinamis -->
+            <!-- Render QRIS via Canvas dinamis dengan Logo QRIS & GPN dari Google Drive -->
           </div>
           
           <!-- Teks Informasi Scan / Upload -->
@@ -189,7 +194,7 @@
       </button>
     </div>
 
-    <!-- STEP 3: HALAMAN TERIMA KASIH (DINAMIS DKM / LAZMU) -->
+    <!-- STEP 3: HALAMAN TERIMA KASIH -->
     <div id="stepThankYou" class="hidden bg-white rounded-2xl shadow-sm p-6 border border-slate-200 text-center space-y-3">
       <div class="flex justify-center mb-1">
           <svg class="w-12 h-12 text-teal-600" fill="currentColor" viewBox="0 0 24 24">
@@ -233,16 +238,47 @@
     let generatedQrisDataUrl = "";
     let precomputedStrukDataUrl = "";
 
+    // Countdown Timer Variables (3 Menit / 180 Detik)
+    let qrisTimerInterval = null;
+    let timeLeft = 180;
+
     window.addEventListener("DOMContentLoaded", () => {
       renderAppUI(); 
       loadAppConfig();
       pilihTujuan('lazmu'); 
-      initSlider(); // Inisialisasi Slider Geser Human Verification
+      initSlider(); 
     });
 
-    // ---------------------------------------------------------
-    // SLIDER GESER UNTUK MULAI (HUMAN VERIFICATION & ANIMASI MODAL)
-    // ---------------------------------------------------------
+    // ------------------------------
+    // COUNTDOWN TIMER QRIS (3 Menit)
+    // ------------------------------
+    function startQrisCountdown() {
+      clearInterval(qrisTimerInterval);
+      timeLeft = 180; 
+      updateTimerDisplay();
+
+      qrisTimerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) {
+          clearInterval(qrisTimerInterval);
+          tampilkanAlert("Waktu QRIS telah habis (kadaluarsa). Silakan buat transaksi baru.");
+          kembaliKeForm();
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      const el = document.getElementById("timerCountdown");
+      if (el) el.innerText = formatted;
+    }
+
+    // -------------------------
+    // SLIDER GESER UNTUK MULAI
+    // -------------------------
     function initSlider() {
       const track = document.getElementById('slider-track');
       const knob = document.getElementById('slider-knob');
@@ -256,7 +292,7 @@
       let maxTranslate = 0;
 
       const updateMetrics = () => {
-        maxTranslate = track.clientWidth - knob.clientWidth - 8; // padding 8px
+        maxTranslate = track.clientWidth - knob.clientWidth - 8; 
       };
       updateMetrics();
       window.addEventListener('resize', updateMetrics);
@@ -286,7 +322,6 @@
       const dragEnd = () => {
         if (!isDragging) return;
         isDragging = false;
-        // Kembali ke posisi awal jika belum sampai ujung
         knob.style.transition = 'transform 0.3s ease';
         fill.style.transition = 'width 0.3s ease';
         knob.style.transform = 'translateX(0px)';
@@ -351,7 +386,6 @@
           appConfig = data.config;
           renderAppUI();
 
-          // Sesuaikan teks Modal Selamat Datang berdasarkan konfigurasi Sheet
           if (appConfig.NAMA_LEMBAGA) {
             document.getElementById("modal-title").innerText = appConfig.NAMA_LEMBAGA;
           }
@@ -448,11 +482,9 @@
       
       if (currentVal.includes(teks)) {
         area.value = currentVal.replace(teks, "").replace(/\s\s+/g, ' ').trim();
-        // Warna pas mati / normal (abu-abu)
         btnElement.className = "doa-chip flex items-center gap-1 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-2.5 rounded-full border border-slate-300 transition-all cursor-pointer";
       } else {
         area.value = currentVal ? currentVal + " " + teks : teks;
-        // Warna pas aktif disamakan karo tombol Tujuan/Nominal (bg-teal-50, border-teal-600, text-teal-800)
         btnElement.className = "doa-chip flex items-center gap-1 text-[10px] bg-teal-50 hover:bg-teal-100 text-teal-800 py-1.5 px-2.5 rounded-full border border-teal-600 transition-all cursor-pointer";
       }
     }
@@ -470,7 +502,6 @@
       const doaText = document.getElementById("inputDoa").value.trim();
       const btnSubmit = document.getElementById("btnSubmit");
       
-      // Tambahkan spinner biar seragam karo tombol ngisor
       btnSubmit.disabled = true;
       btnSubmit.innerHTML = `
         <svg class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
@@ -500,6 +531,7 @@
         if (data.status === "success") {
           currentTransaction = data;
           tampilkanQrisDanStruk(data);
+          startQrisCountdown(); 
         } else {
           tampilkanAlert("Gagal dari Server: " + data.message);
         }
@@ -527,32 +559,75 @@
 
       const namaLabel = data.tujuanCode === 'dkm' ? (appConfig.LABEL_DKM || "DKM Utsman") : (appConfig.LABEL_LAZMU || "LAZMU Utsman");
       const container = document.getElementById("qrisImageContainer");
-      container.innerHTML = '<div class="text-[10px] text-gray-400 py-6">Memuat QRIS...</div>';
+      container.innerHTML = '<div class="text-[10px] text-gray-400 py-6">Memuat QRIS & Logo...</div>';
 
       const qrisApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.qrisString)}`;
 
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = function() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 300;
-        canvas.height = 340;
-        const ctx = canvas.getContext('2d');
+      const imgQr = new Image();
+      imgQr.crossOrigin = "anonymous";
+      imgQr.src = qrisApiUrl;
 
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Menggunakan Link Google Drive milikmu sendiri yang super aman & stabil
+      const imgQrisLogo = new Image();
+      imgQrisLogo.crossOrigin = "anonymous";
+      imgQrisLogo.src = "https://lh3.googleusercontent.com/d/1WEXVeTqZpRTTMnjDJtTpAF3cNY2WQOgm";
 
-        ctx.fillStyle = "#038b86";
-        ctx.font = "bold 16px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(namaLabel, 150, 28);
+      const imgGpnLogo = new Image();
+      imgGpnLogo.crossOrigin = "anonymous";
+      imgGpnLogo.src = "https://lh3.googleusercontent.com/d/19PZ5xEWRsnNyUpafSSuY4qOwraLFyGAQ";
 
-        ctx.drawImage(img, 0, 40, 300, 300);
-        generatedQrisDataUrl = canvas.toDataURL("image/png");
+      let loadedCount = 0;
+      const checkAllLoaded = () => {
+        loadedCount++;
+        if (loadedCount === 3) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 300;
+          canvas.height = 380; 
+          const ctx = canvas.getContext('2d');
 
-        container.innerHTML = `<img src="${generatedQrisDataUrl}" alt="QRIS ${namaLabel}" class="w-44 h-auto object-contain">`;
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          ctx.fillStyle = "#038b86";
+          ctx.font = "bold 15px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(namaLabel, 150, 25);
+
+          // Render aman jika logo berhasil dimuat
+          if (imgQrisLogo.complete && imgQrisLogo.naturalWidth > 0) {
+            ctx.drawImage(imgQrisLogo, 15, 38, 70, 26);
+          }
+          if (imgGpnLogo.complete && imgGpnLogo.naturalWidth > 0) {
+            // Hitung otomatis rasio GPN adhedhasar ukuran asline supaya ora gepeng
+            const gpnAspect = imgGpnLogo.naturalWidth / imgGpnLogo.naturalHeight;
+            const gpnH = 28; // Tinggi dipatok pas 28 piksel
+            const gpnW = gpnH * gpnAspect; // Lebar menyesuaikan otomatis
+            ctx.drawImage(imgGpnLogo, 285 - gpnW, 37, gpnW, gpnH);
+          }
+
+          ctx.strokeStyle = "#e2e8f0";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(15, 75);
+          ctx.lineTo(285, 75);
+          ctx.stroke();
+
+          if (imgQr.complete && imgQr.naturalWidth > 0) {
+            ctx.drawImage(imgQr, 0, 80, 300, 300);
+          }
+
+          generatedQrisDataUrl = canvas.toDataURL("image/png");
+          container.innerHTML = `<img src="${generatedQrisDataUrl}" alt="QRIS ${namaLabel}" class="w-44 h-auto object-contain">`;
+        }
       };
-      img.src = qrisApiUrl;
+
+      imgQr.onload = checkAllLoaded;
+      imgQrisLogo.onload = checkAllLoaded;
+      imgGpnLogo.onload = checkAllLoaded;
+
+      imgQr.onerror = checkAllLoaded;
+      imgQrisLogo.onerror = checkAllLoaded;
+      imgGpnLogo.onerror = checkAllLoaded;
     }
 
     function unduhQrisSaja() {
@@ -583,15 +658,16 @@
     }
 
     function kembaliKeForm() {
+      clearInterval(qrisTimerInterval); 
       document.getElementById('stepQris').classList.add('hidden');
       document.getElementById('stepForm').classList.remove('hidden');
     }
 
     function resetFormToHome() {
+      clearInterval(qrisTimerInterval); 
       document.getElementById('inputNominalManual').value = '';
       document.getElementById('inputDoa').value = '';
 
-      // Reset semua warna chip doa kembali ke normal (abu-abu)[cite: 9]
       document.querySelectorAll(".doa-chip").forEach(btn => {
         btn.className = "doa-chip flex items-center gap-1 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-2.5 rounded-full border border-slate-300 transition-all cursor-pointer";
       });
@@ -610,9 +686,9 @@
     }
 
     async function selesaiTransaksi() {
+      clearInterval(qrisTimerInterval); 
       const btnSelesai = document.getElementById("btnSelesai");
       
-      // Ubah teks tombol menjadi loading agar pengguna tahu sistem sedang memproses
       if (btnSelesai) {
         btnSelesai.disabled = true;
         btnSelesai.innerHTML = `
@@ -649,7 +725,6 @@
         console.error("Gagal mencatat transaksi final:", err);
       }
 
-      // Kembalikan tombol ke bentuk semula (jaga-jaga jika kembali nanti)
       if (btnSelesai) {
         btnSelesai.disabled = false;
         btnSelesai.innerHTML = `
