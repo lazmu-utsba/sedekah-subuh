@@ -229,7 +229,7 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycby4wLKUPDne9tmo3KY7nxcgu_vZPXCQlfYWjEsW1kT0_NvWVJ6kjtkqMrZizYwnwsCu/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzyB8_qpc2DK0SoU2vEJTgY7ktGMG5lI1CzRnWkLjv73tUd7E3GzMDfOxAKzNi2yFzx/exec";
 
     let selectedTujuan = "lazmu";
     let selectedNominal = 1000; 
@@ -533,7 +533,7 @@
           tampilkanQrisDanStruk(data);
           startQrisCountdown(); 
         } else {
-          tampilkanAlert("Gagal dari Server: " + data.message);
+          tampilkanAlert("Perhatian: " + data.message);
         }
       } catch (err) {
         tampilkanAlert("Pesan Sistem: " + err.message);
