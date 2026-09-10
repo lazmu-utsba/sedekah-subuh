@@ -522,7 +522,7 @@
 
         const res = await fetch(API_URL, {
           method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          //headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
         });
 
@@ -568,7 +568,7 @@
       imgQr.crossOrigin = "anonymous";
       imgQr.src = qrisApiUrl;
 
-      // Menggunakan Link Google Drive milikmu sendiri yang super aman & stabil
+      // Menggunakan Link Google Drive
       const imgQrisLogo = new Image();
       imgQrisLogo.crossOrigin = "anonymous";
       imgQrisLogo.src = "https://lh3.googleusercontent.com/d/1uti69epqwFC7j-hqGNU53CvUynxCYzbP";
@@ -720,7 +720,7 @@
 
         await fetch(API_URL, {
           method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          //headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
         });
       } catch (err) {
