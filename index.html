@@ -242,19 +242,19 @@
     let qrisTimerInterval = null;
     let timeLeft = 180;
 
-    // --- FUNGSI PENGAMAN: AUTO-RETRY FETCH (Antisipasi Cold Start Google Apps Script) ---
+    // --- AUTO-RETRY FETCH ---
     async function fetchWithRetry(url, options = {}, retries = 3, delay = 1500) {
       for (let i = 0; i < retries; i++) {
         try {
           const res = await fetch(url, options);
           const text = await res.text();
           
-          // Cek apakah server mbalekake HTML error (kayata 404 utawa <!DOCTYPE html>)
+          // Cek HTML error
           if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
             throw new Error("Server Google sedang cold start / 404");
           }
           
-          // Parsing aman dadi JSON
+          // Parsing JSON
           return JSON.parse(text);
         } catch (err) {
           if (i === retries - 1) throw err; // Lempar error yen wis entek jatah retry
@@ -420,13 +420,13 @@
           if (appConfig.SLOGAN) {
             document.getElementById("modal-slogan").innerText = appConfig.SLOGAN;
           }
-          return; // Langsung mandek kene, loading dadi kilat tanpa nembak server!
+          return;
         } catch (e) {
           console.error("Gagal baca cache config", e);
         }
       }
 
-      // Yen cache wis kadaluarsa utawa durung ana, tarik data anyar saka server + auto-retry
+      // cache kadaluarsa, tarik data server + auto-retry
       try {
         const data = await fetchWithRetry(`${API_URL}?action=getConfig`);
         if (data.status === "success") {
@@ -440,15 +440,15 @@
             document.getElementById("modal-slogan").innerText = appConfig.SLOGAN;
           }
 
-          // Simpen data anyar menyang LocalStorage bareng waktune
+          // Simpen data ke LocalStorage
           localStorage.setItem(CACHE_KEY, JSON.stringify(appConfig));
           localStorage.setItem(TIME_KEY, now);
         }
       } catch (err) {
         console.error("Gagal load config dari server", err);
         
-        // Cadangan pungkasan: Yen server mati total pas diakses, 
-        // tetep gunakna cache lawas yen ana, timbang web-e blong kosong!
+        // Cadangan: server mati total ketika diakses, 
+        // load cache lama
         if (cachedData) {
           appConfig = JSON.parse(cachedData);
           renderAppUI();
