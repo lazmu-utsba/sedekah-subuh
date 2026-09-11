@@ -242,6 +242,27 @@
     let qrisTimerInterval = null;
     let timeLeft = 180;
 
+    // --- FUNGSI PENGAMAN: AUTO-RETRY FETCH (Antisipasi Cold Start Google Apps Script) ---
+    async function fetchWithRetry(url, options = {}, retries = 3, delay = 1500) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const res = await fetch(url, options);
+          const text = await res.text();
+          
+          // Cek apakah server mbalekake HTML error (kayata 404 utawa <!DOCTYPE html>)
+          if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+            throw new Error("Server Google sedang cold start / 404");
+          }
+          
+          // Parsing aman dadi JSON
+          return JSON.parse(text);
+        } catch (err) {
+          if (i === retries - 1) throw err; // Lempar error yen wis entek jatah retry
+          await new Promise(resolve => setTimeout(resolve, delay)); // Tunggu sedhela sadurunge nyoba maneh
+        }
+      }
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
       renderAppUI(); 
       loadAppConfig();
@@ -378,10 +399,36 @@
       document.getElementById('customAlertModal').classList.add('hidden');
     }
 
+    // --- FUNGSI LOAD CONFIG DENGAN LOCALSTORAGE + TTL (1 JAM) & AUTO-RETRY ---
     async function loadAppConfig() {
+      const CACHE_KEY = "lazmu_app_config_cache";
+      const TIME_KEY = "lazmu_app_config_time";
+      const ONE_HOUR = 60 * 60 * 1000; // Wates Kedaluwarsa: 1 Jam
+
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      const cachedTime = localStorage.getItem(TIME_KEY);
+      const now = new Date().getTime();
+
+      // Cek opo cache isih ana lan durung luwih saka 1 jam
+      if (cachedData && cachedTime && (now - cachedTime < ONE_HOUR)) {
+        try {
+          appConfig = JSON.parse(cachedData);
+          renderAppUI();
+          if (appConfig.NAMA_LEMBAGA) {
+            document.getElementById("modal-title").innerText = appConfig.NAMA_LEMBAGA;
+          }
+          if (appConfig.SLOGAN) {
+            document.getElementById("modal-slogan").innerText = appConfig.SLOGAN;
+          }
+          return; // Langsung mandek kene, loading dadi kilat tanpa nembak server!
+        } catch (e) {
+          console.error("Gagal baca cache config", e);
+        }
+      }
+
+      // Yen cache wis kadaluarsa utawa durung ana, tarik data anyar saka server + auto-retry
       try {
-        const res = await fetch(`${API_URL}?action=getConfig`);
-        const data = await res.json();
+        const data = await fetchWithRetry(`${API_URL}?action=getConfig`);
         if (data.status === "success") {
           appConfig = data.config;
           renderAppUI();
@@ -392,9 +439,20 @@
           if (appConfig.SLOGAN) {
             document.getElementById("modal-slogan").innerText = appConfig.SLOGAN;
           }
+
+          // Simpen data anyar menyang LocalStorage bareng waktune
+          localStorage.setItem(CACHE_KEY, JSON.stringify(appConfig));
+          localStorage.setItem(TIME_KEY, now);
         }
       } catch (err) {
-        console.error("Gagal load config", err);
+        console.error("Gagal load config dari server", err);
+        
+        // Cadangan pungkasan: Yen server mati total pas diakses, 
+        // tetep gunakna cache lawas yen ana, timbang web-e blong kosong!
+        if (cachedData) {
+          appConfig = JSON.parse(cachedData);
+          renderAppUI();
+        }
       }
     }
 
@@ -514,27 +572,24 @@
       try {
         const payload = {
           action: "buatQris",
-          secretCode: "z9X!mQ7#pL2$vW8@kX4%nR3&bT6*yH5",          
+          secretCode: "z9X!mQ7#pL2$vW8@kX4%nR3&bT6*yH5",
           tujuan: selectedTujuan,
           nominal: nominalFinal,
           doa: doaText
         };
 
-        const res = await fetch(API_URL, {
+        const data = await fetchWithRetry(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
         });
-
-        const textResponse = await res.text();
-        let data = JSON.parse(textResponse);
 
         if (data.status === "success") {
           currentTransaction = data;
           tampilkanQrisDanStruk(data);
           startQrisCountdown(); 
         } else {
-          tampilkanAlert("Perhatian : " + data.message);
+          tampilkanAlert("Perhatian: " + data.message);
         }
       } catch (err) {
         tampilkanAlert("Pesan Sistem: " + err.message);
@@ -568,7 +623,6 @@
       imgQr.crossOrigin = "anonymous";
       imgQr.src = qrisApiUrl;
 
-      // Menggunakan Link Google Drive
       const imgQrisLogo = new Image();
       imgQrisLogo.crossOrigin = "anonymous";
       imgQrisLogo.src = "https://lh3.googleusercontent.com/d/1uti69epqwFC7j-hqGNU53CvUynxCYzbP";
@@ -594,15 +648,13 @@
           ctx.textAlign = "center";
           ctx.fillText(namaLabel, 150, 25);
 
-          // Render aman jika logo berhasil dimuat
           if (imgQrisLogo.complete && imgQrisLogo.naturalWidth > 0) {
             ctx.drawImage(imgQrisLogo, 15, 38, 70, 26);
           }
           if (imgGpnLogo.complete && imgGpnLogo.naturalWidth > 0) {
-            // Hitung otomatis rasio GPN adhedhasar ukuran asline supaya ora gepeng
             const gpnAspect = imgGpnLogo.naturalWidth / imgGpnLogo.naturalHeight;
-            const gpnH = 28; // Tinggi dipatok pas 28 piksel
-            const gpnW = gpnH * gpnAspect; // Lebar menyesuaikan otomatis
+            const gpnH = 28; 
+            const gpnW = gpnH * gpnAspect; 
             ctx.drawImage(imgGpnLogo, 285 - gpnW, 37, gpnW, gpnH);
           }
 
@@ -711,14 +763,14 @@
       try {
         const payload = {
           action: "simpanTransaksi",
-          secretCode: "z9X!mQ7#pL2$vW8@kX4%nR3&bT6*yH5",          
+          secretCode: "z9X!mQ7#pL2$vW8@kX4%nR3&bT6*yH5",
           idTransaksi: currentTransaction.idTransaksi,
           tujuan: currentTransaction.tujuanCode,
           nominal: currentTransaction.nominal,
           doa: currentTransaction.doa
         };
 
-        await fetch(API_URL, {
+        await fetchWithRetry(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
